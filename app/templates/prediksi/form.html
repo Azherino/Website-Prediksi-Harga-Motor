@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}Form Prediksi Harga{% endblock %}
+{% block page_title %}Prediksi Harga Motor{% endblock %}
+{% block page_subtitle %}Input spesifikasi motor untuk mendapatkan estimasi harga{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns:1fr 380px; gap:20px; align-items:start">
+
+  <!-- Form -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-magic-line"></i> Form Input Prediksi</h3>
+    </div>
+    <div class="card-body">
+      {% if models %}
+      <form method="POST" action="{{ url_for('prediksi.form') }}" id="predict-form">
+
+        <!-- Model Select -->
+        <div class="form-group">
+          <label class="form-label" for="model-select">Pilih Model <span class="required">*</span></label>
+          <select id="model-select" name="model_id" class="form-control" required>
+            <option value="">-- Select Model --</option>
+            {% for m in models %}
+            <option value="{{ m.id }}">
+              Model #{{ m.id }} — R²={{ '{:.4f}'.format(m.r2_score) }}
+              ({{ m.dataset.nama_file[:25] if m.dataset else 'dataset dihapus' }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <hr style="margin:20px 0; border-color:var(--border)" />
+
+        <!-- Row 1 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="tahun_produksi">Tahun Produksi <span class="required">*</span></label>
+            <input id="tahun_produksi" name="tahun_produksi" type="number" class="form-control"
+              placeholder="contoh: 2020" min="1990" max="2026" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kapasitas_mesin">Kapasitas Mesin (cc) <span class="required">*</span></label>
+            <input id="kapasitas_mesin" name="kapasitas_mesin" type="number" class="form-control"
+              placeholder="contoh: 125" min="50" max="2000" step="0.1" required />
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="jarak_tempuh">Jarak Tempuh (km) <span class="required">*</span></label>
+            <input id="jarak_tempuh" name="jarak_tempuh" type="number" class="form-control" placeholder="contoh: 25000"
+              min="0" step="100" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="merek_motor">Merek Motor <span class="required">*</span></label>
+            <select id="merek_motor" name="merek_motor" class="form-control" required>
+              <option value="">-- Pilih Merek --</option>
+              {% for merek in ['Honda','Yamaha','Suzuki'] %}
+              <option value="{{ merek }}">{{ merek }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 3: Tipe + Model Motor -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="tipe_motor">Tipe Motor <span class="required">*</span></label>
+            <select id="tipe_motor" name="tipe_motor" class="form-control" required>
+              <option value="">-- Pilih Tipe --</option>
+              <option value="Bebek">Bebek</option>
+              <option value="Matic">Matic</option>
+              <option value="Sport">Sport</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="model_motor">Model Motor <span class="required">*</span></label>
+            <select id="model_motor" name="model_motor" class="form-control" required disabled>
+              <option value="">-- Pilih Merek & Tipe dahulu --</option>
+            </select>
+            <small id="model-hint" style="display:none; margin-top:6px; color:var(--accent); font-size:11px;">
+              <i class="ri-information-line"></i> <span id="model-hint-text"></span>
+            </small>
+          </div>
+        </div>
+
+        <!-- Row 4: Kondisi + Surat -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="kondisi_fisik">Kondisi Fisik <span class="required">*</span></label>
+            <select id="kondisi_fisik" name="kondisi_fisik" class="form-control" required>
+              <option value="">-- Pilih Kondisi --</option>
+              <option value="Buruk">Buruk</option>
+              <option value="Cukup">Cukup</option>
+              <option value="Baik">Baik</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kelengkapan_surat">Kelengkapan Surat <span class="required">*</span></label>
+            <select id="kelengkapan_surat" name="kelengkapan_surat" class="form-control" required>
+              <option value="">-- Pilih Status Surat --</option>
+              <option value="Lengkap">Lengkap</option>
+              <option value="Tidak Lengkap">Tidak Lengkap</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 5: Pajak -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Pajak <span class="required">*</span></label>
+            <div class="d-flex gap-12" style="margin-top:10px">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                <input type="radio" name="pajak" value="Hidup" required />
+                <span class="badge badge-success">🟢 Hidup</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                <input type="radio" name="pajak" value="Mati" />
+                <span class="badge badge-danger">🔴 Mati</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-12" style="margin-top:12px">
+          <button type="submit" class="btn btn-accent btn-lg" id="btn-predict" style="flex:1; justify-content:center;">
+            <i class="ri-magic-line"></i> Predict Price
+          </button>
+          <button type="reset" class="btn btn-outline btn-lg" id="btn-reset-predict">
+            <i class="ri-refresh-line"></i> Reset
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <div class="empty-state">
+        <i class="ri-cpu-line"></i>
+        <p>Belum ada model yang dilatih. Silakan lakukan training terlebih dahulu.</p>
+        <a href="{{ url_for('prediksi.training') }}" class="btn btn-primary btn-sm" style="margin-top:12px">
+          <i class="ri-cpu-line"></i> Go to Training
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Info Sidebar -->
+  <div>
+    <div class="card mb-16">
+      <div class="card-header">
+        <h3><i class="ri-information-line"></i> Panduan Input</h3>
+      </div>
+      <div class="card-body">
+        <ul style="display:flex; flex-direction:column; gap:10px">
+          {% set tips = [
+          ('ri-calendar-line','Tahun Produksi','Masukkan tahun pembuatan motor (2010-2026)'),
+          ('ri-settings-3-line','Kapasitas Mesin','Dalam satuan cc, contoh: 110, 125, 150'),
+          ('ri-road-map-line','Jarak Tempuh','Total kilometer yang sudah ditempuh'),
+          ('ri-car-line','Merek & Tipe','Pilih merek lalu tipe, model otomatis muncul'),
+          ('ri-motorbike-line','Model Motor','Otomatis terfilter sesuai merek & tipe'),
+          ('ri-file-text-line','Kelengkapan Surat','Lengkap = BPKB + STNK'),
+          ('ri-money-rupee-circle-line','Pajak','Status pajak kendaraan saat ini'),
+          ] %}
+          {% for icon, label, desc in tips %}
+          <li style="font-size:12px">
+            <i class="{{ icon }}" style="color:var(--accent)"></i>
+            <strong> {{ label }}:</strong> {{ desc }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="ri-list-check-2"></i> Prediksi Terbaru</h3>
+      </div>
+      <div class="card-body" style="padding:0">
+        {% set recents = [] %}
+        <!-- Quick link -->
+        <div style="padding:16px; text-align:center">
+          <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-outline btn-sm">
+            <i class="ri-eye-line"></i> Lihat Semua Hasil
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Mapping Merek → Tipe → Model Motor (sesuai Dataset 700) ──────────
+const MOTOR_MODELS = {
+  Honda: {
+    Bebek:  ['Blade', 'Revo', 'Supra X'],
+    Matic:  ['Beat', 'PCX', 'Scoopy', 'Vario'],
+    Sport:  ['CBR 150', 'CBR 250', 'CRF']
+  },
+  Yamaha: {
+    Bebek:  ['Jupiter MX', 'Jupiter Z', 'Vega Force'],
+    Matic:  ['Aerox', 'Mio M3', 'NMAX'],
+    Sport:  ['R15', 'Vixion']
+  },
+  Suzuki: {
+    Bebek:  ['Satria', 'Shogun', 'Smash'],
+    Matic:  ['Hayate', 'Nex'],
+    Sport:  ['GSX R150', 'GSX S150']
+  }
+};
+
+const merekSelect  = document.getElementById('merek_motor');
+const tipeSelect   = document.getElementById('tipe_motor');
+const modelSelect  = document.getElementById('model_motor');
+const modelHint    = document.getElementById('model-hint');
+const modelHintTxt = document.getElementById('model-hint-text');
+
+function updateModelOptions() {
+  const merek = merekSelect.value;
+  const tipe  = tipeSelect.value;
+
+  // Reset model dropdown
+  modelSelect.innerHTML = '';
+  modelHint.style.display = 'none';
+
+  if (!merek || !tipe) {
+    modelSelect.innerHTML = '<option value="">-- Pilih Merek & Tipe dahulu --</option>';
+    modelSelect.disabled = true;
+    return;
+  }
+
+  const models = (MOTOR_MODELS[merek] && MOTOR_MODELS[merek][tipe]) || [];
+
+  if (models.length === 0) {
+    modelSelect.innerHTML = '<option value="">Tidak ada model tersedia</option>';
+    modelSelect.disabled = true;
+    return;
+  }
+
+  // Populate options
+  modelSelect.innerHTML = '<option value="">-- Pilih Model Motor --</option>';
+  models.forEach(function(m) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    modelSelect.appendChild(opt);
+  });
+
+  modelSelect.disabled = false;
+
+  // Show hint
+  modelHintTxt.textContent = models.length + ' model tersedia untuk ' + merek + ' ' + tipe;
+  modelHint.style.display = 'block';
+
+  // Add brief highlight animation
+  modelSelect.style.borderColor = 'var(--accent)';
+  modelSelect.style.boxShadow = '0 0 0 3px rgba(var(--accent-rgb, 99,102,241), 0.15)';
+  setTimeout(function() {
+    modelSelect.style.borderColor = '';
+    modelSelect.style.boxShadow = '';
+  }, 800);
+}
+
+merekSelect.addEventListener('change', function() {
+  modelSelect.value = '';
+  updateModelOptions();
+});
+
+tipeSelect.addEventListener('change', function() {
+  modelSelect.value = '';
+  updateModelOptions();
+});
+
+// Handle form reset
+const resetBtn = document.getElementById('btn-reset-predict');
+if (resetBtn) {
+  resetBtn.addEventListener('click', function() {
+    setTimeout(function() {
+      modelSelect.innerHTML = '<option value="">-- Pilih Merek & Tipe dahulu --</option>';
+      modelSelect.disabled = true;
+      modelHint.style.display = 'none';
+    }, 10);
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Training Model{% endblock %}
+{% block page_title %}Training Model{% endblock %}
+{% block page_subtitle %}Latih model Regresi Linear Berganda menggunakan dataset yang tersedia{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+
+  <!-- Training Form -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-cpu-line"></i> Konfigurasi Training</h3>
+    </div>
+    <div class="card-body">
+      {% if datasets %}
+      <form method="POST" action="{{ url_for('prediksi.training') }}" id="training-form">
+
+        <div class="form-group">
+          <label class="form-label" for="dataset-select">Pilih Dataset <span class="required">*</span></label>
+          <select id="dataset-select" name="dataset_id" class="form-control" required>
+            <option value="">-- Select Dataset --</option>
+            {% for ds in datasets %}
+            <option value="{{ ds.id }}">{{ ds.nama_file }} ({{ ds.jumlah_data }} baris)</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="rasio-slider">
+            Rasio Train / Test &nbsp;
+            <span id="rasio-display" class="badge badge-info">80%</span> /
+            <span id="rasio-test-display" class="badge badge-warning">20%</span>
+          </label>
+          <input id="rasio-slider" name="rasio_train" type="range"
+                 min="60" max="90" value="80" step="5"/>
+          <p class="form-hint">Geser untuk mengatur proporsi data training (60%–90%)</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-start-training"
+                style="width:100%; justify-content:center;">
+          <i class="ri-play-circle-line"></i> Start Training
+        </button>
+      </form>
+
+      <!-- Training progress indicator (shows on submit) -->
+      <div id="training-progress" style="display:none; margin-top:20px; text-align:center">
+        <div style="font-size:40px; margin-bottom:12px">⚙️</div>
+        <p class="fw-600" style="color:var(--primary)">Model sedang dilatih...</p>
+        <p class="text-muted fs-12">Mohon tunggu, proses ini dapat memakan waktu beberapa detik.</p>
+        <div class="progress" style="margin-top:16px">
+          <div class="progress-bar" id="train-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="empty-state">
+        <i class="ri-database-2-line"></i>
+        <p>Belum ada dataset valid. Silakan import dataset terlebih dahulu.</p>
+        <a href="{{ url_for('dataset.index') }}" class="btn btn-primary btn-sm" style="margin-top:12px">
+          <i class="ri-upload-cloud-line"></i> Import Dataset
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Model History -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-history-line"></i> Riwayat Training</h3>
+    </div>
+    <div class="card-body" style="padding:0">
+      <!-- Inline model list -->
+      {% if datasets %}
+        {% set all_models = [] %}
+        {% for ds in datasets %}
+          {% for m in ds.trainings %}
+            {% set _ = all_models.append(m) %}
+          {% endfor %}
+        {% endfor %}
+        {% if all_models %}
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Dataset</th><th>Rasio</th><th>R²</th><th>RMSE</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for m in all_models|sort(attribute='created_at', reverse=True) %}
+              <tr>
+                <td><code>#{{ m.id }}</code></td>
+                <td class="fs-12">{{ m.dataset.nama_file[:20] if m.dataset else '(dihapus)' }}…</td>
+                <td>{{ (m.rasio_train*100)|int }}%/{{ (100-m.rasio_train*100)|int }}%</td>
+                <td>
+                  <span class="badge {% if m.r2_score>=0.9 %}badge-success{% elif m.r2_score>=0.7 %}badge-warning{% else %}badge-danger{% endif %}">
+                    {{ '{:.4f}'.format(m.r2_score) }}
+                  </span>
+                </td>
+                <td class="fs-12">Rp {{ '{:,.0f}'.format(m.rmse).replace(',','.') }}</td>
+                <td>
+                  <a href="{{ url_for('prediksi.report_koefisien', model_id=m.id) }}"
+                     class="btn btn-outline btn-sm btn-icon" title="Export Koefisien PDF">
+                    <i class="ri-file-pdf-line"></i>
+                  </a>
+                  <a href="{{ url_for('evaluasi.index') }}?model_id={{ m.id }}"
+                     class="btn btn-outline btn-sm btn-icon" title="Lihat Evaluasi">
+                    <i class="ri-bar-chart-box-line"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="ri-cpu-line"></i><p>Belum ada model yang dilatih.</p></div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initSlider('rasio-slider', 'rasio-display');
+document.getElementById('rasio-slider').addEventListener('input', function() {
+  document.getElementById('rasio-display').textContent = this.value + '%';
+  document.getElementById('rasio-test-display').textContent = (100 - this.value) + '%';
+});
+
+document.getElementById('training-form')?.addEventListener('submit', function() {
+  document.getElementById('btn-start-training').disabled = true;
+  document.getElementById('training-progress').style.display = 'block';
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 8, 90);
+    document.getElementById('train-bar').style.width = pct + '%';
+    if (pct >= 90) clearInterval(iv);
+  }, 300);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Import Dataset{% endblock %}
+{% block page_title %}Import Dataset{% endblock %}
+{% block page_subtitle %}Upload dan kelola dataset motor bekas{% endblock %}
+
+{% block content %}
+
+<!-- Upload Card -->
+<div class="card mb-24">
+  <div class="card-header">
+    <h3><i class="ri-upload-cloud-line"></i> Upload Dataset Baru</h3>
+  </div>
+  <div class="card-body">
+
+    <!-- Column guide -->
+    <div class="alert alert-info" style="margin-bottom:20px">
+      <i class="ri-information-line"></i>
+      <div>
+        <strong>Format Kolom yang Dibutuhkan (9 kolom):</strong><br/>
+        <code style="font-size:11px">tahun_produksi, kapasitas_mesin, jarak_tempuh, merek_motor,
+        kondisi_fisik, tipe_motor, kelengkapan_surat, pajak, harga_aktual</code>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('dataset.import_dataset') }}"
+          enctype="multipart/form-data" id="upload-form">
+
+      <!-- Drop Zone -->
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon"><i class="ri-file-excel-2-line"></i></div>
+        <h4>Drag &amp; Drop file di sini</h4>
+        <p>atau klik untuk memilih file (CSV / Excel)</p>
+        <input type="file" id="file-input" name="file"
+               accept=".csv,.xlsx,.xls" style="display:none" required/>
+      </div>
+
+      <!-- Progress (hidden) -->
+      <div id="upload-progress" style="display:none; margin-top:16px">
+        <div class="d-flex justify-between mb-8">
+          <span class="fs-12 text-muted">Mengupload...</span>
+          <span class="fs-12 text-muted" id="progress-pct">0%</span>
+        </div>
+        <div class="progress"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+      </div>
+
+      <div style="margin-top:20px; display:flex; gap:10px">
+        <button type="submit" class="btn btn-primary" id="btn-upload">
+          <i class="ri-upload-2-line"></i> Upload &amp; Process
+        </button>
+        <button type="reset" class="btn btn-outline" id="btn-reset-upload">
+          <i class="ri-refresh-line"></i> Reset
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- History Table -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="ri-history-line"></i> Riwayat Import Dataset</h3>
+  </div>
+  <div class="card-body" style="padding:0">
+    {% if datasets %}
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>Nama File</th><th>Jumlah Data</th>
+            <th>Status</th><th>Diupload Oleh</th><th>Tanggal</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ds in datasets %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="fw-600"><i class="ri-file-excel-2-line" style="color:var(--success)"></i> {{ ds.nama_file }}</td>
+            <td>{{ ds.jumlah_data }} baris</td>
+            <td>
+              <span class="badge {% if ds.status=='valid' %}badge-success{% elif ds.status=='invalid' %}badge-danger{% else %}badge-warning{% endif %}">
+                {% if ds.status=='valid' %}✅ Valid{% elif ds.status=='invalid' %}❌ Invalid{% else %}⏳ Pending{% endif %}
+              </span>
+            </td>
+            <td>{{ ds.uploader.nama if ds.uploader else '-' }}</td>
+            <td class="text-muted fs-12">{{ ds.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            <td>
+              <div class="d-flex gap-8">
+                <a href="{{ url_for('dataset.preview', dataset_id=ds.id) }}"
+                   class="btn btn-outline btn-sm btn-icon" title="Preview">
+                  <i class="ri-eye-line"></i>
+                </a>
+                {% if ds.status == 'valid' %}
+                <a href="{{ url_for('dataset.report', dataset_id=ds.id, fmt='pdf') }}"
+                   class="btn btn-outline btn-sm btn-icon" title="Export PDF">
+                  <i class="ri-file-pdf-line"></i>
+                </a>
+                <a href="{{ url_for('dataset.report', dataset_id=ds.id, fmt='xlsx') }}"
+                   class="btn btn-outline btn-sm btn-icon" title="Export Excel">
+                  <i class="ri-file-excel-2-line"></i>
+                </a>
+                {% endif %}
+                <button class="btn btn-danger btn-sm btn-icon" title="Delete"
+                        onclick="openModal('modal-del-{{ ds.id }}')">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+
+              <div class="modal-overlay" id="modal-del-{{ ds.id }}">
+                <div class="modal">
+                  <div class="modal-header"><h3>⚠️ Hapus Dataset</h3></div>
+                  <div class="modal-body">
+                    Hapus <strong>{{ ds.nama_file }}</strong>? Semua data motor terkait juga akan dihapus.
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('modal-del-{{ ds.id }}')">Cancel</button>
+                    <form method="POST" action="{{ url_for('dataset.hapus', dataset_id=ds.id) }}">
+                      <button type="submit" class="btn btn-danger">
+                        <i class="ri-delete-bin-line"></i> Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="ri-database-2-line"></i>
+      <p>Belum ada dataset yang diimport.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  initUploadZone('upload-zone', 'file-input');
+
+  // Fake progress on submit
+  document.getElementById('upload-form').addEventListener('submit', () => {
+    document.getElementById('upload-progress').style.display = 'block';
+    let pct = 0;
+    const interval = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 15, 95);
+      document.getElementById('progress-bar').style.width = pct + '%';
+      document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
+      if (pct >= 95) clearInterval(interval);
+    }, 200);
+  });
+</script>
+{% endblock %}

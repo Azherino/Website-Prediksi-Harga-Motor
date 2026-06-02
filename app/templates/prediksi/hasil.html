@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Riwayat Prediksi{% endblock %}
+{% block page_title %}Riwayat Prediksi{% endblock %}
+{% block page_subtitle %}Semua hasil prediksi harga motor bekas yang telah dilakukan{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <!-- Filters -->
+    <form method="GET" class="d-flex gap-8 align-center">
+      <select name="merek" class="form-control" style="width:150px" id="filter-merek">
+        <option value="">All Brands</option>
+        {% for m in mereks %}
+        <option value="{{ m }}" {% if m==merek_f %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+      <select name="tipe" class="form-control" style="width:140px" id="filter-tipe">
+        <option value="">All Types</option>
+        {% for t in tipes %}
+        <option value="{{ t }}" {% if t==tipe_f %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm" id="btn-filter">
+        <i class="ri-filter-3-line"></i> Filter
+      </button>
+      <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-outline btn-sm" id="btn-reset-filter">
+        <i class="ri-refresh-line"></i> Reset
+      </a>
+    </form>
+
+    <div class="d-flex gap-8">
+      <a href="{{ url_for('prediksi.report_semua', merek=merek_f, tipe=tipe_f) }}" class="btn btn-danger btn-sm" id="btn-export-pdf-all">
+        <i class="ri-file-pdf-line"></i> Cetak PDF
+      </a>
+      <a href="{{ url_for('prediksi.form') }}" class="btn btn-accent btn-sm" id="btn-new-predict-list">
+        <i class="ri-add-line"></i> New Prediction
+      </a>
+    </div>
+  </div>
+
+  <div class="card-body" style="padding:0">
+    {% if results.items %}
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>Merek</th><th>Tipe</th><th>Model</th><th>Tahun</th>
+            <th>KM</th><th>Kondisi</th><th>Pajak</th>
+            <th>Harga Prediksi</th><th>Tanggal</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results.items %}
+          <tr>
+            <td>{{ loop.index + (results.page-1)*results.per_page }}</td>
+            <td><span class="badge badge-primary">{{ r.merek_motor }}</span></td>
+            <td>{{ r.tipe_motor }}</td>
+            <td>{{ r.model_motor or '-' }}</td>
+            <td>{{ r.tahun_produksi }}</td>
+            <td>{{ '{:,.0f}'.format(r.jarak_tempuh).replace(',','.') }}</td>
+            <td>{{ r.kondisi_fisik }}</td>
+            <td>
+              <span class="badge {% if r.pajak=='Aktif' %}badge-success{% else %}badge-danger{% endif %}">
+                {{ r.pajak }}
+              </span>
+            </td>
+            <td class="fw-700 text-primary">
+              Rp {{ '{:,}'.format(r.harga_prediksi).replace(',','.') }}
+            </td>
+            <td class="text-muted fs-12">{{ r.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+              <div class="d-flex gap-8">
+                <a href="{{ url_for('prediksi.detail', prediksi_id=r.id) }}"
+                   class="btn btn-outline btn-sm btn-icon" title="Detail">
+                  <i class="ri-eye-line"></i>
+                </a>
+                <a href="{{ url_for('prediksi.report_prediksi', prediksi_id=r.id, fmt='pdf') }}"
+                   class="btn btn-outline btn-sm btn-icon" title="Export PDF">
+                  <i class="ri-file-pdf-line"></i>
+                </a>
+                <button class="btn btn-danger btn-sm btn-icon" title="Delete"
+                        onclick="openModal('modal-del-{{ r.id }}')">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+
+              <div class="modal-overlay" id="modal-del-{{ r.id }}">
+                <div class="modal">
+                  <div class="modal-header"><h3>Hapus Prediksi #{{ r.id }}</h3></div>
+                  <div class="modal-body">Yakin ingin menghapus data prediksi ini?</div>
+                  <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('modal-del-{{ r.id }}')">Cancel</button>
+                    <form method="POST" action="{{ url_for('prediksi.hapus', prediksi_id=r.id) }}">
+                      <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if results.pages > 1 %}
+    <div class="pagination" style="padding:16px">
+      <a class="page-link {% if not results.has_prev %}disabled{% endif %}"
+         href="{{ url_for('prediksi.hasil', page=results.prev_num, merek=merek_f, tipe=tipe_f) }}">
+        <i class="ri-arrow-left-s-line"></i>
+      </a>
+      {% for p in results.iter_pages(left_edge=1,right_edge=1,left_current=1,right_current=1) %}
+        {% if p %}
+          <a class="page-link {% if p==results.page %}active{% endif %}"
+             href="{{ url_for('prediksi.hasil', page=p, merek=merek_f, tipe=tipe_f) }}">{{ p }}</a>
+        {% else %}
+          <span class="page-link">…</span>
+        {% endif %}
+      {% endfor %}
+      <a class="page-link {% if not results.has_next %}disabled{% endif %}"
+         href="{{ url_for('prediksi.hasil', page=results.next_num, merek=merek_f, tipe=tipe_f) }}">
+        <i class="ri-arrow-right-s-line"></i>
+      </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <i class="ri-magic-line"></i>
+      <p>Belum ada data prediksi.</p>
+      <a href="{{ url_for('prediksi.form') }}" class="btn btn-accent btn-sm" style="margin-top:12px">
+        <i class="ri-add-line"></i> Buat Prediksi Pertama
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

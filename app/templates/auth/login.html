@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Sistem Prediksi Harga Motor PT Putra Hamid</title>
+  <meta name="description" content="Login admin sistem prediksi harga motor bekas PT Putra Hamid." />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+
+<body>
+  <div class="login-page">
+    <div class="login-card">
+
+      <!-- Brand -->
+      <div class="login-brand">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PT Putra Hamid Logo" class="logo-img">
+        <p>Sistem Prediksi Harga Motor Bekas</p>
+      </div>
+
+      <!-- Flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">
+        <i class="ri-information-line"></i> {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <!-- Form -->
+      <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input id="username" name="username" type="text" class="form-control" placeholder="Masukkan username"
+            autocomplete="username" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-group">
+            <input id="password" name="password" type="password" class="form-control" placeholder="Masukkan password"
+              autocomplete="current-password" required />
+            <i class="ri-eye-line input-group-icon" id="toggle-icon" onclick="togglePassword('password','toggle-icon')"
+              title="Show/Hide Password"></i>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-login"
+          style="width:100%; margin-top:8px; justify-content:center;">
+          <i class="ri-login-box-line"></i> Login
+        </button>
+      </form>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

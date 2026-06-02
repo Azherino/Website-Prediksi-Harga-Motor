@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Preview Dataset — {{ dataset.nama_file }}{% endblock %}
+{% block page_title %}Preview Dataset{% endblock %}
+{% block page_subtitle %}{{ dataset.nama_file }} — {{ total_rows }} baris data{% endblock %}
+
+{% block content %}
+
+<!-- Summary Cards -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="ri-file-list-3-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_rows }}</div>
+      <div class="stat-label">Total Baris</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="ri-layout-column-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ columns|length }}</div>
+      <div class="stat-label">Jumlah Kolom</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {% if dataset.status=='valid' %}green{% else %}orange{% endif %}">
+      <i class="ri-{% if dataset.status=='valid' %}checkbox-circle{% else %}error-warning{% endif %}-line"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value fs-13">{{ dataset.status|capitalize }}</div>
+      <div class="stat-label">Status Dataset</div>
+    </div>
+  </div>
+</div>
+
+<!-- Missing Values -->
+{% set has_missing = missing_vals.values()|list|select('gt', 0)|list|length > 0 %}
+{% if has_missing %}
+<div class="alert alert-warning mb-24">
+  <i class="ri-alert-line"></i>
+  <div>
+    <strong>Missing Values Terdeteksi:</strong>
+    {% for col, cnt in missing_vals.items() %}
+      {% if cnt > 0 %}<span class="badge badge-danger" style="margin:0 4px">{{ col }}: {{ cnt }}</span>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Statistik Numerik -->
+{% if stats %}
+<div class="card mb-24">
+  <div class="card-header">
+    <h3><i class="ri-bar-chart-line"></i> Statistik Deskriptif</h3>
+    <div class="d-flex gap-8">
+      <a href="{{ url_for('dataset.report', dataset_id=dataset.id, fmt='pdf') }}"
+         class="btn btn-outline btn-sm" id="btn-export-pdf">
+        <i class="ri-file-pdf-line"></i> Export PDF
+      </a>
+      <a href="{{ url_for('dataset.report', dataset_id=dataset.id, fmt='xlsx') }}"
+         class="btn btn-success btn-sm" id="btn-export-excel">
+        <i class="ri-file-excel-2-line"></i> Export Excel
+      </a>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr><th>Variabel</th><th>Min</th><th>Max</th><th>Mean</th><th>Median</th><th>Std Dev</th></tr>
+        </thead>
+        <tbody>
+          {% set num_map = {
+            'tahun_produksi':  'Tahun Produksi',
+            'kapasitas_mesin': 'Kapasitas Mesin (cc)',
+            'jarak_tempuh':    'Jarak Tempuh (km)',
+            'harga_aktual':    'Harga Aktual (Rp)'
+          } %}
+          {% for col, label in num_map.items() %}
+            {% if col in stats %}
+            <tr>
+              <td class="fw-600">{{ label }}</td>
+              <td>{{ '{:,.0f}'.format(stats[col]['min']).replace(',','.') }}</td>
+              <td>{{ '{:,.0f}'.format(stats[col]['max']).replace(',','.') }}</td>
+              <td>{{ '{:,.2f}'.format(stats[col]['mean']).replace(',','.') }}</td>
+              <td>{{ '{:,.0f}'.format(stats[col]['median']).replace(',','.') }}</td>
+              <td>{{ '{:,.2f}'.format(stats[col]['std']).replace(',','.') }}</td>
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Distribusi Kategorikal -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px">
+  {% for col in ['merek_motor','tipe_motor','kondisi_fisik','kelengkapan_surat','pajak'] %}
+    {% if col in stats %}
+    <div class="card">
+      <div class="card-header">
+        <h3>Distribusi {{ col|replace('_',' ')|title }}</h3>
+      </div>
+      <div class="card-body" style="padding:12px 16px">
+        {% for k, v in stats[col].items() %}
+        <div style="margin-bottom:8px">
+          <div class="d-flex justify-between mb-4">
+            <span class="fs-12 fw-600">{{ k }}</span>
+            <span class="fs-12 text-muted">{{ v }}</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar"
+                 style="width:{{ (v / stats[col].values()|list|sum * 100)|round(1) }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Preview Table -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="ri-table-line"></i> Preview Data (10 Baris Pertama)</h3>
+  </div>
+  <div class="card-body" style="padding:0">
+    {% if preview %}
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            {% for col in columns %}<th>{{ col }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in preview %}
+          <tr>
+            {% for col in columns %}
+            <td>{{ row[col] if row[col] is not none else '–' }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="ri-table-line"></i><p>Tidak ada data untuk ditampilkan.</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<div style="margin-top:20px">
+  <a href="{{ url_for('dataset.index') }}" class="btn btn-outline" id="btn-back-dataset">
+    <i class="ri-arrow-left-line"></i> Back to Dataset
+  </a>
+  {% if dataset.status == 'valid' %}
+  <a href="{{ url_for('prediksi.training') }}" class="btn btn-primary" style="margin-left:10px" id="btn-go-training">
+    <i class="ri-cpu-line"></i> Lanjut Training Model
+  </a>
+  {% endif %}
+</div>
+{% endblock %}

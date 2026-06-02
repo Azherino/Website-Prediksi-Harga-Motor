@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Kelola User{% endblock %}
+{% block page_title %}Kelola User{% endblock %}
+{% block page_subtitle %}Manajemen akun admin yang dapat mengakses sistem{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex align-center gap-12">
+      <form method="GET" class="search-bar">
+        <i class="ri-search-line"></i>
+        <input id="search-user" name="q" type="text" class="form-control"
+               placeholder="Search users..." value="{{ search }}"/>
+      </form>
+    </div>
+    {% if current_user.role == 'superadmin' %}
+    <a href="{{ url_for('users.tambah') }}" class="btn btn-primary" id="btn-add-user">
+      <i class="ri-user-add-line"></i> Add User
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="card-body" style="padding:0">
+    {% if users.items %}
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>Nama</th><th>Username</th>
+            <th>Email</th><th>Role</th><th>Dibuat</th>
+            {% if current_user.role == 'superadmin' %}<th>Actions</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users.items %}
+          <tr>
+            <td>{{ loop.index + (users.page-1)*users.per_page }}</td>
+            <td class="fw-600">{{ user.nama }}</td>
+            <td><code>{{ user.username }}</code></td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="badge {% if user.role=='superadmin' %}badge-warning{% else %}badge-info{% endif %}">
+                {{ user.role|capitalize }}
+              </span>
+            </td>
+            <td class="text-muted fs-12">{{ user.created_at.strftime('%d %b %Y') }}</td>
+            {% if current_user.role == 'superadmin' %}
+            <td>
+              <div class="d-flex gap-8">
+                <a href="{{ url_for('users.edit', user_id=user.id) }}"
+                   class="btn btn-outline btn-sm btn-icon" title="Edit">
+                  <i class="ri-edit-line"></i>
+                </a>
+                {% if user.id != current_user.id %}
+                <button class="btn btn-danger btn-sm btn-icon" title="Delete"
+                        onclick="openModal('modal-hapus-{{ user.id }}')">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+                {% endif %}
+              </div>
+
+              <!-- Delete Modal -->
+              <div class="modal-overlay" id="modal-hapus-{{ user.id }}">
+                <div class="modal">
+                  <div class="modal-header">
+                    <h3>⚠️ Konfirmasi Hapus</h3>
+                  </div>
+                  <div class="modal-body">
+                    Apakah Anda yakin ingin menghapus user <strong>{{ user.nama }}</strong>?
+                    Tindakan ini tidak dapat dibatalkan.
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('modal-hapus-{{ user.id }}')">
+                      Cancel
+                    </button>
+                    <form method="POST" action="{{ url_for('users.hapus', user_id=user.id) }}">
+                      <button type="submit" class="btn btn-danger" id="btn-confirm-delete-{{ user.id }}">
+                        <i class="ri-delete-bin-line"></i> Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if users.pages > 1 %}
+    <div class="pagination" style="padding:16px">
+      <a class="page-link {% if not users.has_prev %}disabled{% endif %}"
+         href="{{ url_for('users.index', page=users.prev_num, q=search) }}">
+        <i class="ri-arrow-left-s-line"></i>
+      </a>
+      {% for p in users.iter_pages(left_edge=1,right_edge=1,left_current=1,right_current=1) %}
+        {% if p %}
+          <a class="page-link {% if p==users.page %}active{% endif %}"
+             href="{{ url_for('users.index', page=p, q=search) }}">{{ p }}</a>
+        {% else %}
+          <span class="page-link" style="cursor:default">…</span>
+        {% endif %}
+      {% endfor %}
+      <a class="page-link {% if not users.has_next %}disabled{% endif %}"
+         href="{{ url_for('users.index', page=users.next_num, q=search) }}">
+        <i class="ri-arrow-right-s-line"></i>
+      </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <i class="ri-group-line"></i>
+      <p>Tidak ada data user ditemukan.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

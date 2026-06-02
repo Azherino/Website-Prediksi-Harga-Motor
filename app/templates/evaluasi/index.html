@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Evaluasi Model{% endblock %}
+{% block page_title %}Evaluasi Model{% endblock %}
+{% block page_subtitle %}Performa model Regresi Linear Berganda pada data test{% endblock %}
+
+{% block content %}
+
+{% if not models %}
+<div class="empty-state card" style="padding:48px">
+  <i class="ri-bar-chart-box-line" style="font-size:56px; color:var(--border)"></i>
+  <p style="font-size:15px; margin-top:12px">Belum ada model yang dilatih.</p>
+  <a href="{{ url_for('prediksi.training') }}" class="btn btn-primary" style="margin-top:16px">
+    <i class="ri-cpu-line"></i> Mulai Training Model
+  </a>
+</div>
+{% else %}
+
+<!-- Model Selector -->
+<div class="card mb-24">
+  <div class="card-header">
+    <h3><i class="ri-cpu-line"></i> Pilih Model</h3>
+    {% if model %}
+    <div class="d-flex gap-8">
+      <a href="{{ url_for('evaluasi.report', model_id=model.id, fmt='pdf') }}"
+         class="btn btn-outline btn-sm" id="btn-export-eval-pdf">
+        <i class="ri-file-pdf-line"></i> Export PDF
+      </a>
+      <a href="{{ url_for('evaluasi.report', model_id=model.id, fmt='xlsx') }}"
+         class="btn btn-success btn-sm" id="btn-export-eval-excel">
+        <i class="ri-file-excel-2-line"></i> Export Excel
+      </a>
+      <a href="{{ url_for('prediksi.report_koefisien', model_id=model.id) }}"
+         class="btn btn-primary btn-sm" id="btn-export-koef-pdf">
+        <i class="ri-function-line"></i> Report Koefisien
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <form method="GET" class="d-flex align-center gap-12">
+      <select name="model_id" class="form-control" style="max-width:400px" id="model-select-eval"
+              onchange="this.form.submit()">
+        {% for m in models %}
+        <option value="{{ m.id }}" {% if m.id==active_id %}selected{% endif %}>
+          Model #{{ m.id }} — {{ m.dataset.nama_file[:30] if m.dataset else '(dataset dihapus)' }}
+          (R²={{ '{:.4f}'.format(m.r2_score) }}, {{ m.created_at.strftime('%d %b %Y') }})
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+{% if model %}
+<!-- Metric Cards -->
+<div class="metrics-grid mb-24">
+  {% set r2 = model.r2_score %}
+  <div class="metric-card {% if r2>=0.9 %}metric-good{% elif r2>=0.7 %}metric-medium{% else %}metric-bad{% endif %}">
+    <div class="metric-value" style="color:{% if r2>=0.9 %}var(--success){% elif r2>=0.7 %}var(--warning){% else %}var(--danger){% endif %}">
+      {{ '{:.4f}'.format(r2) }}
+    </div>
+    <div class="metric-label">R² Score</div>
+    <div class="metric-badge">
+      <span class="badge {% if r2>=0.9 %}badge-success{% elif r2>=0.7 %}badge-warning{% else %}badge-danger{% endif %}">
+        {% if r2>=0.9 %}Sangat Baik{% elif r2>=0.7 %}Baik{% elif r2>=0.5 %}Cukup{% else %}Kurang{% endif %}
+      </span>
+    </div>
+  </div>
+  <div class="metric-card metric-good">
+    <div class="metric-value" style="color:var(--primary); font-size:20px">
+      Rp {{ '{:,.0f}'.format(model.mae).replace(',','.') }}
+    </div>
+    <div class="metric-label">MAE</div>
+    <div class="metric-badge"><span class="badge badge-info">Mean Absolute Error</span></div>
+  </div>
+  <div class="metric-card metric-medium">
+    <div class="metric-value" style="color:var(--primary); font-size:20px">
+      Rp {{ '{:,.0f}'.format(model.rmse).replace(',','.') }}
+    </div>
+    <div class="metric-label">RMSE</div>
+    <div class="metric-badge"><span class="badge badge-warning">Root Mean Sq. Error</span></div>
+  </div>
+  <div class="metric-card {% if model.mape<15 %}metric-good{% elif model.mape<30 %}metric-medium{% else %}metric-bad{% endif %}">
+    <div class="metric-value" style="color:{% if model.mape<15 %}var(--success){% elif model.mape<30 %}var(--warning){% else %}var(--danger){% endif %}">
+      {{ '{:.2f}'.format(model.mape) }}%
+    </div>
+    <div class="metric-label">MAPE</div>
+    <div class="metric-badge">
+      <span class="badge {% if model.mape<15 %}badge-success{% elif model.mape<30 %}badge-warning{% else %}badge-danger{% endif %}">
+        {% if model.mape<15 %}Akurat{% elif model.mape<30 %}Cukup{% else %}Kurang{% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid mb-24">
+  <!-- Scatter: Aktual vs Prediksi -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-bubble-chart-line"></i> Scatter Plot: Aktual vs Prediksi</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:300px">
+        <canvas id="chart-scatter"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Residual Plot -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-bar-chart-horizontal-line"></i> Residual Plot (Error Distribution)</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:300px">
+        <canvas id="chart-residual"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Coefficient Table -->
+<div class="card mb-24">
+  <div class="card-header">
+    <h3><i class="ri-function-line"></i> Koefisien Regresi</h3>
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr><th>Variabel</th><th>Koefisien (β)</th><th>Pengaruh</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:rgba(30,58,95,.03)">
+            <td class="fw-600">Intercept (β₀)</td>
+            <td>{{ '{:,.4f}'.format(model.intercept).replace(',','.') }}</td>
+            <td>–</td>
+          </tr>
+          {% for name, coef in (model.koefisien or {}).items() %}
+          <tr>
+            <td>{{ name }}</td>
+            <td class="{% if coef>0 %}text-success{% else %}text-danger{% endif %} fw-600">
+              {{ '{:,.4f}'.format(coef).replace(',','.') }}
+            </td>
+            <td>
+              <span class="badge {% if coef>0 %}badge-success{% else %}badge-danger{% endif %}">
+                {% if coef>0 %}↑ Positif{% else %}↓ Negatif{% endif %}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Model Info -->
+<div class="card">
+  <div class="card-header"><h3><i class="ri-information-line"></i> Informasi Model</h3></div>
+  <div class="card-body">
+    <div class="form-row">
+      <div>
+        <p class="text-muted fs-12 mb-4">Dataset</p>
+        <p class="fw-600">{{ model.dataset.nama_file if model.dataset else '(dataset dihapus)' }}</p>
+      </div>
+      <div>
+        <p class="text-muted fs-12 mb-4">Rasio Train / Test</p>
+        <p class="fw-600">{{ (model.rasio_train*100)|int }}% / {{ (100-model.rasio_train*100)|int }}%</p>
+      </div>
+      <div>
+        <p class="text-muted fs-12 mb-4">Jumlah Data Training</p>
+        <p class="fw-600">{{ model.train_size }} baris</p>
+      </div>
+      <div>
+        <p class="text-muted fs-12 mb-4">Jumlah Data Test</p>
+        <p class="fw-600">{{ model.test_size }} baris</p>
+      </div>
+      <div>
+        <p class="text-muted fs-12 mb-4">Tanggal Training</p>
+        <p class="fw-600">{{ model.created_at.strftime('%d %B %Y, %H:%M') }}</p>
+      </div>
+      <div>
+        <p class="text-muted fs-12 mb-4">MSE</p>
+        <p class="fw-600">Rp {{ '{:,.0f}'.format(model.mse).replace(',','.') }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if model and model.y_test_data %}
+<script>
+Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+const yTest = {{ model.y_test_data | tojson }};
+const yPred = {{ model.y_pred_data | tojson }};
+
+// Scatter plot
+const scatterData = yTest.map((y, i) => ({ x: y, y: yPred[i] }));
+const maxVal = Math.max(...yTest, ...yPred);
+const minVal = Math.min(...yTest, ...yPred);
+
+new Chart(document.getElementById('chart-scatter'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: 'Aktual vs Prediksi',
+        data: scatterData,
+        backgroundColor: 'rgba(56, 189, 248, 0.6)',
+        pointRadius: 5
+      },
+      {
+        label: 'Garis Ideal',
+        data: [{ x: minVal, y: minVal }, { x: maxVal, y: maxVal }],
+        type: 'line',
+        borderColor: '#FBBF24',
+        borderWidth: 2,
+        pointRadius: 0,
+        borderDash: [6, 3]
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { font: { size: 11 } } } },
+    scales: {
+      x: {
+        title: { display: true, text: 'Harga Aktual (Rp)', font: { size: 11 } },
+        ticks: { callback: v => (v/1e6).toFixed(0) + 'Jt', font: { size: 10 } }
+      },
+      y: {
+        title: { display: true, text: 'Harga Prediksi (Rp)', font: { size: 11 } },
+        ticks: { callback: v => (v/1e6).toFixed(0) + 'Jt', font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// Residual plot (histogram of errors)
+const residuals = yTest.map((y, i) => y - yPred[i]);
+const buckets = 15;
+const minR = Math.min(...residuals), maxR = Math.max(...residuals);
+const step  = (maxR - minR) / buckets;
+const bins  = Array.from({ length: buckets }, (_, i) => minR + i * step);
+const counts = bins.map((b, i) => residuals.filter(r => r >= b && r < b + step).length);
+
+new Chart(document.getElementById('chart-residual'), {
+  type: 'bar',
+  data: {
+    labels: bins.map(b => (b/1e6).toFixed(1) + 'Jt'),
+    datasets: [{
+      label: 'Frekuensi Error',
+      data: counts,
+      backgroundColor: 'rgba(59, 130, 246, 0.65)',
+      borderColor: 'rgba(59, 130, 246, 0.9)',
+      borderWidth: 1, borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { title: { display: true, text: 'Residual (Rp)', font: { size: 11 } },
+           ticks: { font: { size: 9 } } },
+      y: { title: { display: true, text: 'Frekuensi', font: { size: 11 } } }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

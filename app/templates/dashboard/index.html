@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Ringkasan sistem prediksi harga motor bekas PT Putra Hamid{% endblock %}
+
+{% block content %}
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="ri-database-2-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-total-motor">{{ total_motor }}</div>
+      <div class="stat-label">Total Data Motor</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="ri-magic-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-total-prediksi">{{ total_prediksi }}</div>
+      <div class="stat-label">Total Prediksi</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="ri-bar-chart-grouped-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-r2">{{ r2_score }}%</div>
+      <div class="stat-label">Akurasi Model (R²)</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="ri-money-rupee-circle-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value fs-13" id="stat-avg">
+        {% if avg_prediksi %}
+          Rp {{ '{:,}'.format(avg_prediksi).replace(',', '.') }}
+        {% else %}–{% endif %}
+      </div>
+      <div class="stat-label">Rata-rata Harga Prediksi</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+  <!-- Distribusi per Merek -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-pie-chart-line"></i> Distribusi Motor per Merek</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chart-merek"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rata-rata Harga per Merek -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="ri-bar-chart-2-line"></i> Rata-rata Harga per Merek</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="chart-avg-harga"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Aktual vs Prediksi -->
+{% if aktual_list %}
+<div class="card mb-24">
+  <div class="card-header">
+    <h3><i class="ri-line-chart-line"></i> Harga Aktual vs Prediksi (Data Test Model Terakhir)</h3>
+  </div>
+  <div class="card-body">
+    <div class="chart-container" style="height:280px">
+      <canvas id="chart-aktual-prediksi"></canvas>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Latest Predictions Table -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="ri-history-line"></i> 5 Prediksi Terbaru</h3>
+    <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-outline btn-sm">
+      Lihat Semua <i class="ri-arrow-right-line"></i>
+    </a>
+  </div>
+  <div class="card-body" style="padding:0">
+    {% if latest %}
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Merek</th><th>Tipe</th><th>Tahun</th>
+            <th>KM</th><th>Kondisi</th><th>Harga Prediksi</th><th>Tanggal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in latest %}
+          <tr>
+            <td><span class="badge badge-primary">{{ p.merek_motor }}</span></td>
+            <td>{{ p.tipe_motor }}</td>
+            <td>{{ p.tahun_produksi }}</td>
+            <td>{{ '{:,}'.format(p.jarak_tempuh|int).replace(',','.') }} km</td>
+            <td>{{ p.kondisi_fisik }}</td>
+            <td class="fw-700 text-primary">
+              Rp {{ '{:,}'.format(p.harga_prediksi).replace(',','.') }}
+            </td>
+            <td class="text-muted fs-12">{{ p.created_at.strftime('%d %b %Y') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="ri-inbox-line"></i>
+      <p>Belum ada data prediksi.</p>
+      <a href="{{ url_for('prediksi.form') }}" class="btn btn-primary btn-sm" style="margin-top:12px">
+        Buat Prediksi Pertama
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+const COLORS = ['#3B82F6','#38BDF8','#FBBF24','#34D399','#8B5CF6','#F87171','#FCD34D','#10B981'];
+
+// Chart 1: Pie — distribusi merek
+const merekLabels = {{ merek_labels | tojson }};
+const merekCounts = {{ merek_counts | tojson }};
+if (merekLabels.length) {
+  new Chart(document.getElementById('chart-merek'), {
+    type: 'doughnut',
+    data: {
+      labels: merekLabels,
+      datasets: [{ data: merekCounts, backgroundColor: COLORS, borderWidth: 2, borderColor: '#1E293B' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 12 }, padding: 12 } } }
+    }
+  });
+} else {
+  document.getElementById('chart-merek').parentElement.innerHTML =
+    '<div class="empty-state"><i class="ri-pie-chart-line"></i><p>Belum ada data dataset.</p></div>';
+}
+
+// Chart 2: Bar — avg harga per merek
+const avgLabels = {{ avg_labels | tojson }};
+const avgValues = {{ avg_values | tojson }};
+if (avgLabels.length) {
+  new Chart(document.getElementById('chart-avg-harga'), {
+    type: 'bar',
+    data: {
+      labels: avgLabels,
+      datasets: [{
+        label: 'Rata-rata Harga (Rp)',
+        data: avgValues,
+        backgroundColor: COLORS.map(c => c + 'CC'),
+        borderColor: COLORS,
+        borderWidth: 2, borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          ticks: { callback: v => 'Rp ' + (v/1e6).toFixed(0) + 'Jt', font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// Chart 3: Line — aktual vs prediksi
+const aktualList   = {{ aktual_list   | tojson }};
+const prediksiList = {{ prediksi_list | tojson }};
+if (aktualList.length) {
+  const labels = aktualList.map((_, i) => 'Data ' + (i+1));
+  new Chart(document.getElementById('chart-aktual-prediksi'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Harga Aktual',
+          data: aktualList,
+          borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)',
+          tension: .35, fill: true, pointRadius: 3
+        },
+        {
+          label: 'Harga Prediksi',
+          data: prediksiList,
+          borderColor: '#FBBF24', backgroundColor: 'rgba(251,191,36,0.08)',
+          tension: .35, fill: true, pointRadius: 3, borderDash: [5,3]
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 12 } } } },
+      scales: {
+        y: {
+          ticks: { callback: v => 'Rp ' + (v/1e6).toFixed(0) + 'Jt', font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

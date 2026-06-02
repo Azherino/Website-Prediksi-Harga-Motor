@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables (SENSITIVE)
+.env
+.flaskenv
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Machine Learning models & data cache
+*.pkl
+*.joblib
+*.h5
+.ipynb_checkpoints/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+
+# dataset
+*.xlsx
+
+#report
+*.pdf
