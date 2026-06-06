@@ -1,27 +1,27 @@
-# 🏍️ Website Prediksi Harga Motor Bekas - PT Putra Hamid
+# Website Prediksi Harga Motor Bekas - PT Putra Hamid
 
 Aplikasi berbasis web untuk memprediksi harga motor bekas menggunakan **Metode Data Mining — Regresi Linear Berganda (Multiple Linear Regression)**. Proyek ini dikembangkan dengan framework **Flask** (Python) dan database **MySQL** untuk membantu PT Putra Hamid menentukan harga motor bekas secara objektif dan akurat berdasarkan 8 variabel spesifikasi motor.
 
 ---
 
-## 🎯 Fitur Utama
+## Fitur Utama
 
 Sistem ini didesain khusus untuk kebutuhan internal admin PT Putra Hamid dengan fitur lengkap sebagai berikut:
 
-*   **🔐 Autentikasi Admin:** Sistem login terproteksi dengan role management (Admin dan Superadmin) menggunakan enkripsi password `bcrypt`.
-*   **🏠 Dashboard Interaktif:** Menampilkan metrik statistik penting (total dataset, jumlah prediksi, akurasi $R^2$ model, rata-rata harga) dan grafik distribusi visual.
-*   **👥 Kelola User (CRUD):** Manajemen akun pengguna/admin yang diizinkan mengakses sistem.
-*   **📂 Import Dataset:** Upload data motor bekas dalam format `.xlsx` atau `.csv`, lengkap dengan preview data, validasi data otomatis, serta laporan statistik deskriptif.
-*   **🔮 Prediksi Harga:**
+*   **Autentikasi Admin:** Sistem login terproteksi dengan role management (Admin dan Superadmin) menggunakan enkripsi password `bcrypt`.
+*   **Dashboard Interaktif:** Menampilkan metrik statistik penting (total dataset, jumlah prediksi, akurasi $R^2$ model, rata-rata harga) dan grafik distribusi visual.
+*   **Kelola User (CRUD):** Manajemen akun pengguna/admin yang diizinkan mengakses sistem.
+*   **Import Dataset:** Upload data motor bekas dalam format `.xlsx` atau `.csv`, lengkap dengan preview data, validasi data otomatis, serta laporan statistik deskriptif.
+*   **Prediksi Harga:**
     *   **Training Model:** Melatih model Regresi Linear Berganda langsung dari web dengan mengatur rasio data *Train/Test*.
     *   **Form Prediksi:** Memprediksi harga motor secara instan dengan memasukkan 8 variabel spesifikasi motor.
     *   **Riwayat Prediksi:** Menyimpan dan menampilkan seluruh hasil riwayat perhitungan prediksi.
-*   **📊 Evaluasi Model:** Menampilkan metrik performa model ($R^2$, MAE, RMSE, MAPE) beserta grafik *Scatter Plot* (Aktual vs Prediksi) dan *Residual Plot*.
-*   **📄 Laporan PDF/Excel:** Cetak laporan hasil prediksi, evaluasi model, koefisien regresi, dan statistik dataset secara dinamis.
+*   **Evaluasi Model:** Menampilkan metrik performa model ($R^2$, MAE, RMSE, MAPE) beserta grafik *Scatter Plot* (Aktual vs Prediksi) dan *Residual Plot*.
+*   **Laporan PDF/Excel:** Cetak laporan hasil prediksi, evaluasi model, koefisien regresi, dan statistik dataset secara dinamis.
 
 ---
 
-## 🛠️ Teknologi & Library
+##  Teknologi & Library
 
 *   **Backend:** Python 3.x, Flask (Web Framework)
 *   **Database & ORM:** MySQL, Flask-SQLAlchemy, PyMySQL
@@ -31,7 +31,7 @@ Sistem ini didesain khusus untuk kebutuhan internal admin PT Putra Hamid dengan 
 
 ---
 
-## 📂 Struktur Variabel Input Prediksi
+##  Struktur Variabel Input Prediksi
 
 Model prediksi harga menggunakan 8 variabel penentu berikut:
 
@@ -46,7 +46,7 @@ Model prediksi harga menggunakan 8 variabel penentu berikut:
 
 ---
 
-## 🚀 Panduan Instalasi & Menjalankan Aplikasi
+##  Panduan Instalasi & Menjalankan Aplikasi
 
 Ikuti langkah-langkah di bawah ini untuk menjalankan aplikasi ini di komputer lokal Anda (*localhost*):
 
@@ -87,7 +87,7 @@ python run.py
 
 ---
 
-## 🔐 Kredensial Login Default
+##  Kredensial Login Default
 
 Setelah aplikasi berjalan, buka browser dan akses `http://localhost:5000`. Gunakan akun berikut untuk masuk:
 *   **Username:** `admin`
