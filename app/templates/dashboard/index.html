@@ -1,223 +1,314 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
-{% block page_subtitle %}Ringkasan sistem prediksi harga motor bekas PT Putra Hamid{% endblock %}
 
 {% block content %}
-
-<!-- Stats Cards -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-icon blue"><i class="ri-database-2-line"></i></div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-total-motor">{{ total_motor }}</div>
-      <div class="stat-label">Total Data Motor</div>
-    </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon orange"><i class="ri-magic-line"></i></div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-total-prediksi">{{ total_prediksi }}</div>
-      <div class="stat-label">Total Prediksi</div>
-    </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon green"><i class="ri-bar-chart-grouped-line"></i></div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-r2">{{ r2_score }}%</div>
-      <div class="stat-label">Akurasi Model (R²)</div>
-    </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon purple"><i class="ri-money-rupee-circle-line"></i></div>
-    <div class="stat-info">
-      <div class="stat-value fs-13" id="stat-avg">
-        {% if avg_prediksi %}
-          Rp {{ '{:,}'.format(avg_prediksi).replace(',', '.') }}
-        {% else %}–{% endif %}
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card card-body d-flex flex-row align-items-center justify-content-between">
+      <div>
+        <h5 class="mb-0">Selamat Datang, {{ current_user.nama if current_user.is_authenticated else 'User' }}!</h5>
+        <p class="text-sm mb-0 text-secondary">Sistem Prediksi Harga Motor Bekas — PT Putra Hamid</p>
       </div>
-      <div class="stat-label">Rata-rata Harga Prediksi</div>
-    </div>
-  </div>
-</div>
-
-<!-- Charts -->
-<div class="charts-grid">
-  <!-- Distribusi per Merek -->
-  <div class="card">
-    <div class="card-header">
-      <h3><i class="ri-pie-chart-line"></i> Distribusi Motor per Merek</h3>
-    </div>
-    <div class="card-body">
-      <div class="chart-container">
-        <canvas id="chart-merek"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Rata-rata Harga per Merek -->
-  <div class="card">
-    <div class="card-header">
-      <h3><i class="ri-bar-chart-2-line"></i> Rata-rata Harga per Merek</h3>
-    </div>
-    <div class="card-body">
-      <div class="chart-container">
-        <canvas id="chart-avg-harga"></canvas>
+      <div>
+        <a href="{{ url_for('dashboard.download_report') }}" class="btn bg-gradient-dark mb-0">
+          <i class="fas fa-file-pdf me-2"></i>Download Laporan
+        </a>
       </div>
     </div>
   </div>
 </div>
-
-<!-- Aktual vs Prediksi -->
-{% if aktual_list %}
-<div class="card mb-24">
-  <div class="card-header">
-    <h3><i class="ri-line-chart-line"></i> Harga Aktual vs Prediksi (Data Test Model Terakhir)</h3>
+<div class="row">
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-database text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">Total Data Motor</p>
+          <h4 class="mb-0">{{ total_motor }}</h4>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">Data tersedia</span> untuk prediksi</p>
+      </div>
+    </div>
   </div>
-  <div class="card-body">
-    <div class="chart-container" style="height:280px">
-      <canvas id="chart-aktual-prediksi"></canvas>
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-magic text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">Total Prediksi</p>
+          <h4 class="mb-0">{{ total_prediksi }}</h4>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">Prediksi</span> yang telah dilakukan</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-chart-bar text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">Akurasi Model (R²)</p>
+          <h4 class="mb-0">{{ r2_score }}%</h4>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">Sangat Baik</span> untuk prediksi</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6">
+    <div class="card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-money-bill-wave text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">Rata-rata Harga</p>
+          <h5 class="mb-0">
+            {% if avg_prediksi %}
+              Rp {{ '{:,}'.format(avg_prediksi).replace(',', '.') }}
+            {% else %}–{% endif %}
+          </h5>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">Berdasarkan</span> data terbaru</p>
+      </div>
     </div>
   </div>
 </div>
-{% endif %}
 
-<!-- Latest Predictions Table -->
-<div class="card">
-  <div class="card-header">
-    <h3><i class="ri-history-line"></i> 5 Prediksi Terbaru</h3>
-    <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-outline btn-sm">
-      Lihat Semua <i class="ri-arrow-right-line"></i>
-    </a>
+<div class="row mt-4">
+  <div class="col-lg-6 col-md-6 mt-4 mb-4">
+    <div class="card z-index-2">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+          <div class="chart">
+            <canvas id="chart-merek" class="chart-canvas" height="170"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-0">Distribusi Motor per Merek</h6>
+        <p class="text-sm text-secondary">Proporsi data per merek motor dalam dataset.</p>
+      </div>
+    </div>
   </div>
-  <div class="card-body" style="padding:0">
-    {% if latest %}
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>Merek</th><th>Tipe</th><th>Tahun</th>
-            <th>KM</th><th>Kondisi</th><th>Harga Prediksi</th><th>Tanggal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in latest %}
-          <tr>
-            <td><span class="badge badge-primary">{{ p.merek_motor }}</span></td>
-            <td>{{ p.tipe_motor }}</td>
-            <td>{{ p.tahun_produksi }}</td>
-            <td>{{ '{:,}'.format(p.jarak_tempuh|int).replace(',','.') }} km</td>
-            <td>{{ p.kondisi_fisik }}</td>
-            <td class="fw-700 text-primary">
-              Rp {{ '{:,}'.format(p.harga_prediksi).replace(',','.') }}
-            </td>
-            <td class="text-muted fs-12">{{ p.created_at.strftime('%d %b %Y') }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="col-lg-6 col-md-6 mt-4 mb-4">
+    <div class="card z-index-2">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+        <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+          <div class="chart">
+            <canvas id="chart-avg-harga" class="chart-canvas" height="170"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-0">Rata-rata Harga per Merek</h6>
+        <p class="text-sm text-secondary">Analisis perbandingan harga berdasarkan merek.</p>
+      </div>
     </div>
-    {% else %}
-    <div class="empty-state">
-      <i class="ri-inbox-line"></i>
-      <p>Belum ada data prediksi.</p>
-      <a href="{{ url_for('prediksi.form') }}" class="btn btn-primary btn-sm" style="margin-top:12px">
-        Buat Prediksi Pertama
-      </a>
-    </div>
-    {% endif %}
   </div>
 </div>
 
+<div class="row mt-4">
+  <div class="col-12 mt-4 mb-4">
+    <div class="card z-index-2">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+        <div class="bg-gradient-info shadow-info border-radius-lg py-3 pe-1">
+          <div class="chart">
+            <canvas id="chart-aktual-prediksi" class="chart-canvas" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-0">Perbandingan Harga Aktual vs Prediksi</h6>
+        <p class="text-sm text-secondary">Berdasarkan data test pada model pelatihan terakhir (20 data pertama).</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-2">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 d-flex align-items-center justify-content-between px-3">
+          <h6 class="text-white text-capitalize mb-0">5 Prediksi Terbaru</h6>
+          <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-sm btn-outline-light mb-0">Lihat Semua</a>
+        </div>
+      </div>
+      <div class="card-body px-0 pb-2">
+        <div class="table-responsive p-0">
+          {% if latest %}
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Merek</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipe & Tahun</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">KM & Kondisi</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Harga Prediksi</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tanggal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in latest %}
+              <tr>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm">{{ p.merek_motor }}</h6>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="text-xs font-weight-bold mb-0">{{ p.tipe_motor }}</p>
+                  <p class="text-xs text-secondary mb-0">{{ p.tahun_produksi }}</p>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <span class="badge badge-sm bg-gradient-success">{{ p.kondisi_fisik }}</span>
+                  <p class="text-xs text-secondary mb-0 mt-1">{{ '{:,}'.format(p.jarak_tempuh|int).replace(',','.') }} km</p>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-sm font-weight-bold">Rp {{ '{:,}'.format(p.harga_prediksi).replace(',','.') }}</span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-secondary text-xs">{{ p.created_at.strftime('%d %b %Y') }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="text-center p-5">
+            <i class="fas fa-inbox fa-3x text-secondary opacity-3 mb-3"></i>
+            <p class="text-secondary">Belum ada data prediksi.</p>
+            <a href="{{ url_for('prediksi.form') }}" class="btn bg-gradient-primary mt-2">Buat Prediksi Pertama</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
-Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
-const COLORS = ['#3B82F6','#38BDF8','#FBBF24','#34D399','#8B5CF6','#F87171','#FCD34D','#10B981'];
-
-// Chart 1: Pie — distribusi merek
-const merekLabels = {{ merek_labels | tojson }};
-const merekCounts = {{ merek_counts | tojson }};
-if (merekLabels.length) {
-  new Chart(document.getElementById('chart-merek'), {
-    type: 'doughnut',
-    data: {
-      labels: merekLabels,
-      datasets: [{ data: merekCounts, backgroundColor: COLORS, borderWidth: 2, borderColor: '#1E293B' }]
+var ctxMerek = document.getElementById("chart-merek").getContext("2d");
+var ctxAvg   = document.getElementById("chart-avg-harga").getContext("2d");
+var chartDefaults = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    y: {
+      grid: { drawBorder: false, display: true, drawOnChartArea: true, drawTicks: false,
+              borderDash: [5,5], color: 'rgba(255,255,255,.2)' },
+      ticks: { color: '#f8f9fa', padding: 10, font: { size: 13, weight: 300, family: 'Roboto' } }
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'right', labels: { font: { size: 12 }, padding: 12 } } }
+    x: {
+      grid: { drawBorder: false, display: true, drawOnChartArea: true, drawTicks: false,
+              borderDash: [5,5], color: 'rgba(255,255,255,.2)' },
+      ticks: { color: '#f8f9fa', padding: 10, font: { size: 13, weight: 300, family: 'Roboto' } }
     }
-  });
-} else {
-  document.getElementById('chart-merek').parentElement.innerHTML =
-    '<div class="empty-state"><i class="ri-pie-chart-line"></i><p>Belum ada data dataset.</p></div>';
-}
+  }
+};
 
-// Chart 2: Bar — avg harga per merek
-const avgLabels = {{ avg_labels | tojson }};
-const avgValues = {{ avg_values | tojson }};
-if (avgLabels.length) {
-  new Chart(document.getElementById('chart-avg-harga'), {
+var merekLabels = {{ merek_labels | tojson }};
+var merekCounts = {{ merek_counts | tojson }};
+if (merekLabels.length > 0) {
+  new Chart(ctxMerek, {
     type: 'bar',
-    data: {
-      labels: avgLabels,
-      datasets: [{
-        label: 'Rata-rata Harga (Rp)',
-        data: avgValues,
-        backgroundColor: COLORS.map(c => c + 'CC'),
-        borderColor: COLORS,
-        borderWidth: 2, borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          ticks: { callback: v => 'Rp ' + (v/1e6).toFixed(0) + 'Jt', font: { size: 11 } }
-        },
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
-      }
-    }
+    data: { labels: merekLabels, datasets: [{ label: 'Jumlah', tension: 0.4, borderWidth: 0,
+      borderRadius: 4, borderSkipped: false, backgroundColor: 'rgba(255,255,255,.8)',
+      data: merekCounts, maxBarThickness: 30 }] },
+    options: chartDefaults
   });
 }
 
-// Chart 3: Line — aktual vs prediksi
-const aktualList   = {{ aktual_list   | tojson }};
-const prediksiList = {{ prediksi_list | tojson }};
-if (aktualList.length) {
-  const labels = aktualList.map((_, i) => 'Data ' + (i+1));
-  new Chart(document.getElementById('chart-aktual-prediksi'), {
+var avgLabels = {{ avg_labels | tojson }};
+var avgValues = {{ avg_values | tojson }};
+if (avgLabels.length > 0) {
+  new Chart(ctxAvg, {
+    type: 'bar',
+    data: { labels: avgLabels, datasets: [{ label: 'Rata-rata Harga', tension: 0.4, borderWidth: 0,
+      borderRadius: 4, borderSkipped: false, backgroundColor: 'rgba(255,255,255,.8)',
+      data: avgValues, maxBarThickness: 30 }] },
+    options: chartDefaults
+  });
+}
+
+var ctxAktualPrediksi = document.getElementById("chart-aktual-prediksi")?.getContext("2d");
+var aktualList = {{ aktual_list | tojson }};
+var prediksiList = {{ prediksi_list | tojson }};
+if (ctxAktualPrediksi && aktualList.length > 0 && prediksiList.length > 0) {
+  var labels = aktualList.map(function(_, i) { return "Data " + (i + 1); });
+  
+  new Chart(ctxAktualPrediksi, {
     type: 'line',
     data: {
-      labels,
+      labels: labels,
       datasets: [
         {
           label: 'Harga Aktual',
+          tension: 0.4,
+          borderWidth: 3,
+          borderColor: 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'transparent',
           data: aktualList,
-          borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)',
-          tension: .35, fill: true, pointRadius: 3
+          pointRadius: 3,
+          pointBackgroundColor: 'rgba(255, 255, 255, 0.8)',
         },
         {
           label: 'Harga Prediksi',
+          tension: 0.4,
+          borderWidth: 3,
+          borderColor: 'rgba(255, 255, 255, 0.4)',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
           data: prediksiList,
-          borderColor: '#FBBF24', backgroundColor: 'rgba(251,191,36,0.08)',
-          tension: .35, fill: true, pointRadius: 3, borderDash: [5,3]
+          pointRadius: 3,
+          pointBackgroundColor: 'rgba(255, 255, 255, 0.4)',
         }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { font: { size: 12 } } } },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: '#f8f9fa' }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
       scales: {
         y: {
-          ticks: { callback: v => 'Rp ' + (v/1e6).toFixed(0) + 'Jt', font: { size: 11 } }
+          grid: { drawBorder: false, display: true, drawOnChartArea: true, drawTicks: false, borderDash: [5,5], color: 'rgba(255,255,255,.2)' },
+          ticks: { color: '#f8f9fa', padding: 10, font: { size: 13, weight: 300, family: 'Roboto' } }
         },
-        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        x: {
+          grid: { drawBorder: false, display: true, drawOnChartArea: true, drawTicks: false, borderDash: [5,5], color: 'rgba(255,255,255,.2)' },
+          ticks: { color: '#f8f9fa', padding: 10, font: { size: 13, weight: 300, family: 'Roboto' } }
+        }
       }
     }
   });

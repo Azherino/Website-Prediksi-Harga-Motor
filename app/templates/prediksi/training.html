@@ -1,120 +1,149 @@
 {% extends "base.html" %}
 {% block title %}Training Model{% endblock %}
 {% block page_title %}Training Model{% endblock %}
-{% block page_subtitle %}Latih model Regresi Linear Berganda menggunakan dataset yang tersedia{% endblock %}
 
 {% block content %}
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
-
+<div class="row">
   <!-- Training Form -->
-  <div class="card">
-    <div class="card-header">
-      <h3><i class="ri-cpu-line"></i> Konfigurasi Training</h3>
-    </div>
-    <div class="card-body">
-      {% if datasets %}
-      <form method="POST" action="{{ url_for('prediksi.training') }}" id="training-form">
-
-        <div class="form-group">
-          <label class="form-label" for="dataset-select">Pilih Dataset <span class="required">*</span></label>
-          <select id="dataset-select" name="dataset_id" class="form-control" required>
-            <option value="">-- Select Dataset --</option>
-            {% for ds in datasets %}
-            <option value="{{ ds.id }}">{{ ds.nama_file }} ({{ ds.jumlah_data }} baris)</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="rasio-slider">
-            Rasio Train / Test &nbsp;
-            <span id="rasio-display" class="badge badge-info">80%</span> /
-            <span id="rasio-test-display" class="badge badge-warning">20%</span>
-          </label>
-          <input id="rasio-slider" name="rasio_train" type="range"
-                 min="60" max="90" value="80" step="5"/>
-          <p class="form-hint">Geser untuk mengatur proporsi data training (60%–90%)</p>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg" id="btn-start-training"
-                style="width:100%; justify-content:center;">
-          <i class="ri-play-circle-line"></i> Start Training
-        </button>
-      </form>
-
-      <!-- Training progress indicator (shows on submit) -->
-      <div id="training-progress" style="display:none; margin-top:20px; text-align:center">
-        <div style="font-size:40px; margin-bottom:12px">⚙️</div>
-        <p class="fw-600" style="color:var(--primary)">Model sedang dilatih...</p>
-        <p class="text-muted fs-12">Mohon tunggu, proses ini dapat memakan waktu beberapa detik.</p>
-        <div class="progress" style="margin-top:16px">
-          <div class="progress-bar" id="train-bar" style="width:0%"></div>
+  <div class="col-lg-5 col-md-12 mb-4">
+    <div class="card h-100">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">
+            <i class="fas fa-microchip me-2"></i>Konfigurasi Training
+          </h6>
         </div>
       </div>
+      <div class="card-body">
+        {% if datasets %}
+        <form method="POST" action="{{ url_for('prediksi.training') }}" id="training-form">
+          <div class="input-group input-group-static mb-4">
+            <label for="dataset-select" class="ms-0">Pilih Dataset <span class="text-danger">*</span></label>
+            <select id="dataset-select" name="dataset_id" class="form-control" required>
+              <option value="">-- Select Dataset --</option>
+              {% for ds in datasets %}
+              <option value="{{ ds.id }}">{{ ds.nama_file }} ({{ ds.jumlah_data }} baris)</option>
+              {% endfor %}
+            </select>
+          </div>
 
-      {% else %}
-      <div class="empty-state">
-        <i class="ri-database-2-line"></i>
-        <p>Belum ada dataset valid. Silakan import dataset terlebih dahulu.</p>
-        <a href="{{ url_for('dataset.index') }}" class="btn btn-primary btn-sm" style="margin-top:12px">
-          <i class="ri-upload-cloud-line"></i> Import Dataset
-        </a>
+          <div class="mb-4">
+            <div class="d-flex justify-content-between">
+              <label class="form-label ms-0">Rasio Train / Test</label>
+              <div>
+                <span class="badge bg-gradient-primary" id="rasio-display">80%</span>
+                <span class="text-secondary text-xs"> / </span>
+                <span class="badge bg-gradient-warning" id="rasio-test-display">20%</span>
+              </div>
+            </div>
+            <input id="rasio-slider" name="rasio_train" type="range" class="form-range mt-2 w-100"
+                   min="60" max="90" value="80" step="5">
+            <p class="text-xs text-secondary mt-1">Geser untuk mengatur proporsi data training (60%–90%)</p>
+          </div>
+
+          <button type="submit" class="btn bg-gradient-primary w-100" id="btn-start-training">
+            <i class="fas fa-play-circle me-1"></i>Start Training
+          </button>
+        </form>
+
+        <div id="training-progress" style="display:none;" class="mt-4 text-center">
+          <div class="mb-2">
+            <i class="fas fa-sync fa-spin fa-2x text-primary"></i>
+          </div>
+          <p class="text-sm font-weight-bold text-dark mt-2">Model sedang dilatih...</p>
+          <p class="text-xs text-secondary">Mohon tunggu, proses ini dapat memakan waktu beberapa detik.</p>
+          <div class="progress mt-3">
+            <div class="progress-bar bg-gradient-primary" id="train-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-database fa-3x text-secondary opacity-3 mb-3 d-block"></i>
+          <p class="text-secondary text-sm">Belum ada dataset valid.</p>
+          <a href="{{ url_for('dataset.index') }}" class="btn bg-gradient-primary mt-2 btn-sm">Import Dataset</a>
+        </div>
+        {% endif %}
       </div>
-      {% endif %}
     </div>
   </div>
 
-  <!-- Model History -->
-  <div class="card">
-    <div class="card-header">
-      <h3><i class="ri-history-line"></i> Riwayat Training</h3>
-    </div>
-    <div class="card-body" style="padding:0">
-      <!-- Inline model list -->
-      {% if datasets %}
-        {% set all_models = [] %}
-        {% for ds in datasets %}
-          {% for m in ds.trainings %}
-            {% set _ = all_models.append(m) %}
-          {% endfor %}
-        {% endfor %}
-        {% if all_models %}
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr><th>ID</th><th>Dataset</th><th>Rasio</th><th>R²</th><th>RMSE</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              {% for m in all_models|sort(attribute='created_at', reverse=True) %}
-              <tr>
-                <td><code>#{{ m.id }}</code></td>
-                <td class="fs-12">{{ m.dataset.nama_file[:20] if m.dataset else '(dihapus)' }}…</td>
-                <td>{{ (m.rasio_train*100)|int }}%/{{ (100-m.rasio_train*100)|int }}%</td>
-                <td>
-                  <span class="badge {% if m.r2_score>=0.9 %}badge-success{% elif m.r2_score>=0.7 %}badge-warning{% else %}badge-danger{% endif %}">
-                    {{ '{:.4f}'.format(m.r2_score) }}
-                  </span>
-                </td>
-                <td class="fs-12">Rp {{ '{:,.0f}'.format(m.rmse).replace(',','.') }}</td>
-                <td>
-                  <a href="{{ url_for('prediksi.report_koefisien', model_id=m.id) }}"
-                     class="btn btn-outline btn-sm btn-icon" title="Export Koefisien PDF">
-                    <i class="ri-file-pdf-line"></i>
-                  </a>
-                  <a href="{{ url_for('evaluasi.index') }}?model_id={{ m.id }}"
-                     class="btn btn-outline btn-sm btn-icon" title="Lihat Evaluasi">
-                    <i class="ri-bar-chart-box-line"></i>
-                  </a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+  <!-- Training History -->
+  <div class="col-lg-7 col-md-12 mb-4">
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">
+            <i class="fas fa-history me-2"></i>Riwayat Training
+          </h6>
         </div>
-        {% else %}
-        <div class="empty-state"><i class="ri-cpu-line"></i><p>Belum ada model yang dilatih.</p></div>
+      </div>
+      <div class="card-body px-0 pb-2">
+        {% if datasets %}
+          {% set all_models = [] %}
+          {% for ds in datasets %}{% for m in ds.trainings %}{% set _ = all_models.append(m) %}{% endfor %}{% endfor %}
+          {% if all_models %}
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Model</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dataset</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Rasio</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">R²</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">RMSE</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for m in all_models|sort(attribute='created_at', reverse=True) %}
+                <tr>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">#{{ m.id }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ m.created_at.strftime('%d %b %Y') }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <p class="text-xs font-weight-bold mb-0">{{ m.dataset.nama_file[:22] if m.dataset else '(dihapus)' }}</p>
+                    <p class="text-xs text-secondary mb-0">{{ m.dataset.jumlah_data if m.dataset else '-' }} baris</p>
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    <span class="badge badge-sm bg-gradient-secondary">{{ (m.rasio_train*100)|int }}%/{{ (100-m.rasio_train*100)|int }}%</span>
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="badge badge-sm {% if m.r2_score>=0.9 %}bg-gradient-success{% elif m.r2_score>=0.7 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}">
+                      {{ '{:.4f}'.format(m.r2_score) }}
+                    </span>
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs">Rp {{ '{:,.0f}'.format(m.rmse).replace(',','.') }}</span>
+                  </td>
+                  <td class="align-middle">
+                    <div class="d-flex justify-content-end gap-1 pe-2">
+                      <a href="{{ url_for('prediksi.report_koefisien', model_id=m.id) }}" class="btn btn-link text-dark px-1 mb-0" title="Export PDF">
+                        <i class="fas fa-file-pdf"></i>
+                      </a>
+                      <a href="{{ url_for('evaluasi.index') }}?model_id={{ m.id }}" class="btn btn-link text-info px-1 mb-0" title="Evaluasi">
+                        <i class="fas fa-chart-bar"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-microchip fa-3x text-secondary opacity-3 mb-3 d-block"></i>
+            <p class="text-secondary text-sm">Belum ada model yang dilatih.</p>
+          </div>
+          {% endif %}
         {% endif %}
-      {% endif %}
+      </div>
     </div>
   </div>
 </div>
@@ -122,21 +151,25 @@
 
 {% block scripts %}
 <script>
-initSlider('rasio-slider', 'rasio-display');
-document.getElementById('rasio-slider').addEventListener('input', function() {
-  document.getElementById('rasio-display').textContent = this.value + '%';
-  document.getElementById('rasio-test-display').textContent = (100 - this.value) + '%';
-});
-
-document.getElementById('training-form')?.addEventListener('submit', function() {
-  document.getElementById('btn-start-training').disabled = true;
-  document.getElementById('training-progress').style.display = 'block';
-  let pct = 0;
-  const iv = setInterval(() => {
-    pct = Math.min(pct + Math.random() * 8, 90);
-    document.getElementById('train-bar').style.width = pct + '%';
-    if (pct >= 90) clearInterval(iv);
-  }, 300);
-});
+var slider = document.getElementById('rasio-slider');
+if (slider) {
+  slider.addEventListener('input', function() {
+    document.getElementById('rasio-display').textContent = this.value + '%';
+    document.getElementById('rasio-test-display').textContent = (100 - this.value) + '%';
+  });
+}
+var trainingForm = document.getElementById('training-form');
+if (trainingForm) {
+  trainingForm.addEventListener('submit', function() {
+    document.getElementById('btn-start-training').disabled = true;
+    document.getElementById('training-progress').style.display = 'block';
+    var pct = 0;
+    var iv = setInterval(function() {
+      pct = Math.min(pct + Math.random() * 8, 90);
+      document.getElementById('train-bar').style.width = pct + '%';
+      if (pct >= 90) clearInterval(iv);
+    }, 300);
+  });
+}
 </script>
 {% endblock %}

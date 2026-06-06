@@ -74,14 +74,19 @@ def tambah():
 
 @users_bp.route('/edit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-@superadmin_required
 def edit(user_id):
+    if current_user.role != 'superadmin' and current_user.id != user_id:
+        flash('Anda tidak memiliki akses untuk mengedit pengguna ini.', 'danger')
+        return redirect(url_for('users.index'))
+
     user = User.query.get_or_404(user_id)
 
     if request.method == 'POST':
         user.nama  = request.form.get('nama', user.nama).strip()
         user.email = request.form.get('email', user.email).strip()
-        user.role  = request.form.get('role', user.role)
+        
+        if current_user.role == 'superadmin':
+            user.role  = request.form.get('role', user.role)
 
         new_pass = request.form.get('password', '').strip()
         if new_pass:

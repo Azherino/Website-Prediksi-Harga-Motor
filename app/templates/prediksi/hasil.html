@@ -1,138 +1,162 @@
 {% extends "base.html" %}
 {% block title %}Riwayat Prediksi{% endblock %}
-{% block page_title %}Riwayat Prediksi{% endblock %}
-{% block page_subtitle %}Semua hasil prediksi harga motor bekas yang telah dilakukan{% endblock %}
+{% block page_title %}Hasil Prediksi{% endblock %}
 
 {% block content %}
-<div class="card">
-  <div class="card-header">
-    <!-- Filters -->
-    <form method="GET" class="d-flex gap-8 align-center">
-      <select name="merek" class="form-control" style="width:150px" id="filter-merek">
-        <option value="">All Brands</option>
-        {% for m in mereks %}
-        <option value="{{ m }}" {% if m==merek_f %}selected{% endif %}>{{ m }}</option>
-        {% endfor %}
-      </select>
-      <select name="tipe" class="form-control" style="width:140px" id="filter-tipe">
-        <option value="">All Types</option>
-        {% for t in tipes %}
-        <option value="{{ t }}" {% if t==tipe_f %}selected{% endif %}>{{ t }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit" class="btn btn-primary btn-sm" id="btn-filter">
-        <i class="ri-filter-3-line"></i> Filter
-      </button>
-      <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-outline btn-sm" id="btn-reset-filter">
-        <i class="ri-refresh-line"></i> Reset
-      </a>
-    </form>
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 d-flex align-items-center justify-content-between px-3">
+          <h6 class="text-white text-capitalize mb-0">
+            <i class="fas fa-list-alt me-2"></i>Riwayat Prediksi Harga Motor
+          </h6>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('prediksi.report_semua', merek=merek_f, tipe=tipe_f) }}" class="btn btn-sm btn-outline-light mb-0" id="btn-export-pdf-all">
+              <i class="fas fa-file-pdf me-1"></i>Cetak PDF
+            </a>
+            <a href="{{ url_for('prediksi.form') }}" class="btn btn-sm bg-gradient-primary mb-0" id="btn-new-predict-list">
+              <i class="fas fa-plus me-1"></i>New Prediction
+            </a>
+          </div>
+        </div>
+      </div>
 
-    <div class="d-flex gap-8">
-      <a href="{{ url_for('prediksi.report_semua', merek=merek_f, tipe=tipe_f) }}" class="btn btn-danger btn-sm" id="btn-export-pdf-all">
-        <i class="ri-file-pdf-line"></i> Cetak PDF
-      </a>
-      <a href="{{ url_for('prediksi.form') }}" class="btn btn-accent btn-sm" id="btn-new-predict-list">
-        <i class="ri-add-line"></i> New Prediction
-      </a>
-    </div>
-  </div>
+      <div class="card-body px-4 pt-3 pb-2">
+        <!-- Filters -->
+        <form method="GET" class="row g-2 align-items-end mb-3">
+          <div class="col-auto">
+            <label class="form-label text-xs text-uppercase text-secondary ms-0">Merek</label>
+            <select name="merek" class="form-control form-control-sm" id="filter-merek" style="min-width:140px;">
+              <option value="">Semua Merek</option>
+              {% for m in mereks %}
+              <option value="{{ m }}" {% if m==merek_f %}selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="form-label text-xs text-uppercase text-secondary ms-0">Tipe</label>
+            <select name="tipe" class="form-control form-control-sm" id="filter-tipe" style="min-width:120px;">
+              <option value="">Semua Tipe</option>
+              {% for t in tipes %}
+              <option value="{{ t }}" {% if t==tipe_f %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-sm bg-gradient-dark mb-0" id="btn-filter">
+              <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-sm btn-outline-secondary mb-0" id="btn-reset-filter">Reset</a>
+          </div>
+        </form>
 
-  <div class="card-body" style="padding:0">
-    {% if results.items %}
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>No</th><th>Merek</th><th>Tipe</th><th>Model</th><th>Tahun</th>
-            <th>KM</th><th>Kondisi</th><th>Pajak</th>
-            <th>Harga Prediksi</th><th>Tanggal</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in results.items %}
-          <tr>
-            <td>{{ loop.index + (results.page-1)*results.per_page }}</td>
-            <td><span class="badge badge-primary">{{ r.merek_motor }}</span></td>
-            <td>{{ r.tipe_motor }}</td>
-            <td>{{ r.model_motor or '-' }}</td>
-            <td>{{ r.tahun_produksi }}</td>
-            <td>{{ '{:,.0f}'.format(r.jarak_tempuh).replace(',','.') }}</td>
-            <td>{{ r.kondisi_fisik }}</td>
-            <td>
-              <span class="badge {% if r.pajak=='Aktif' %}badge-success{% else %}badge-danger{% endif %}">
-                {{ r.pajak }}
-              </span>
-            </td>
-            <td class="fw-700 text-primary">
-              Rp {{ '{:,}'.format(r.harga_prediksi).replace(',','.') }}
-            </td>
-            <td class="text-muted fs-12">{{ r.created_at.strftime('%d %b %Y') }}</td>
-            <td>
-              <div class="d-flex gap-8">
-                <a href="{{ url_for('prediksi.detail', prediksi_id=r.id) }}"
-                   class="btn btn-outline btn-sm btn-icon" title="Detail">
-                  <i class="ri-eye-line"></i>
-                </a>
-                <a href="{{ url_for('prediksi.report_prediksi', prediksi_id=r.id, fmt='pdf') }}"
-                   class="btn btn-outline btn-sm btn-icon" title="Export PDF">
-                  <i class="ri-file-pdf-line"></i>
-                </a>
-                <button class="btn btn-danger btn-sm btn-icon" title="Delete"
-                        onclick="openModal('modal-del-{{ r.id }}')">
-                  <i class="ri-delete-bin-line"></i>
-                </button>
-              </div>
-
-              <div class="modal-overlay" id="modal-del-{{ r.id }}">
-                <div class="modal">
-                  <div class="modal-header"><h3>Hapus Prediksi #{{ r.id }}</h3></div>
-                  <div class="modal-body">Yakin ingin menghapus data prediksi ini?</div>
-                  <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeModal('modal-del-{{ r.id }}')">Cancel</button>
-                    <form method="POST" action="{{ url_for('prediksi.hapus', prediksi_id=r.id) }}">
-                      <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
+        {% if results.items %}
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">No</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Merek & Tipe</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Model & Tahun</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">KM & Kondisi</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pajak</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Harga Prediksi</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tanggal</th>
+                <th class="text-secondary opacity-7"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in results.items %}
+              <tr>
+                <td><p class="text-xs font-weight-bold mb-0 ps-3">{{ loop.index + (results.page-1)*results.per_page }}</p></td>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm">{{ r.merek_motor }}</h6>
+                      <p class="text-xs text-secondary mb-0">{{ r.tipe_motor }}</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+                </td>
+                <td>
+                  <p class="text-xs font-weight-bold mb-0">{{ r.model_motor or '-' }}</p>
+                  <p class="text-xs text-secondary mb-0">{{ r.tahun_produksi }}</p>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="badge badge-sm bg-gradient-secondary">{{ r.kondisi_fisik }}</span>
+                  <p class="text-xs text-secondary mb-0 mt-1">{{ '{:,.0f}'.format(r.jarak_tempuh).replace(',','.') }} km</p>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="badge badge-sm {% if r.pajak=='Aktif' or r.pajak=='Hidup' %}bg-gradient-success{% else %}bg-gradient-danger{% endif %}">
+                    {{ r.pajak }}
+                  </span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-sm font-weight-bold">Rp {{ '{:,}'.format(r.harga_prediksi).replace(',','.') }}</span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-secondary text-xs">{{ r.created_at.strftime('%d %b %Y') }}</span>
+                </td>
+                <td class="align-middle">
+                  <div class="d-flex gap-1 justify-content-end pe-2">
+                    <a href="{{ url_for('prediksi.detail', prediksi_id=r.id) }}" class="btn btn-link text-info px-2 mb-0" title="Detail">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('prediksi.report_prediksi', prediksi_id=r.id, fmt='pdf') }}" class="btn btn-link text-dark px-2 mb-0" title="Export PDF">
+                      <i class="fas fa-file-pdf"></i>
+                    </a>
+                    <button class="btn btn-link text-danger px-2 mb-0" title="Delete"
+                            onclick="document.getElementById('modal-del-{{ r.id }}').classList.add('show')">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                  <div class="modal-backdrop-custom" id="modal-del-{{ r.id }}">
+                    <div class="card p-4" style="max-width:380px; width:90%;">
+                      <h6 class="mb-2">Hapus Prediksi #{{ r.id }}</h6>
+                      <p class="text-sm text-secondary mb-4">Yakin ingin menghapus data prediksi ini?</p>
+                      <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-outline-secondary mb-0"
+                                onclick="document.getElementById('modal-del-{{ r.id }}').classList.remove('show')">Batal</button>
+                        <form method="POST" action="{{ url_for('prediksi.hapus', prediksi_id=r.id) }}" class="d-inline">
+                          <button type="submit" class="btn btn-sm bg-gradient-danger mb-0">Hapus</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-    {% if results.pages > 1 %}
-    <div class="pagination" style="padding:16px">
-      <a class="page-link {% if not results.has_prev %}disabled{% endif %}"
-         href="{{ url_for('prediksi.hasil', page=results.prev_num, merek=merek_f, tipe=tipe_f) }}">
-        <i class="ri-arrow-left-s-line"></i>
-      </a>
-      {% for p in results.iter_pages(left_edge=1,right_edge=1,left_current=1,right_current=1) %}
-        {% if p %}
-          <a class="page-link {% if p==results.page %}active{% endif %}"
-             href="{{ url_for('prediksi.hasil', page=p, merek=merek_f, tipe=tipe_f) }}">{{ p }}</a>
-        {% else %}
-          <span class="page-link">…</span>
+        {% if results.pages > 1 %}
+        <div class="d-flex justify-content-center mt-3">
+          <nav><ul class="pagination pagination-sm">
+            <li class="page-item {% if not results.has_prev %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('prediksi.hasil', page=results.prev_num, merek=merek_f, tipe=tipe_f) }}">&laquo;</a>
+            </li>
+            {% for p in results.iter_pages(left_edge=1,right_edge=1,left_current=1,right_current=1) %}
+              {% if p %}<li class="page-item {% if p==results.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('prediksi.hasil', page=p, merek=merek_f, tipe=tipe_f) }}">{{ p }}</a>
+              </li>{% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+            {% endfor %}
+            <li class="page-item {% if not results.has_next %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('prediksi.hasil', page=results.next_num, merek=merek_f, tipe=tipe_f) }}">&raquo;</a>
+            </li>
+          </ul></nav>
+        </div>
         {% endif %}
-      {% endfor %}
-      <a class="page-link {% if not results.has_next %}disabled{% endif %}"
-         href="{{ url_for('prediksi.hasil', page=results.next_num, merek=merek_f, tipe=tipe_f) }}">
-        <i class="ri-arrow-right-s-line"></i>
-      </a>
-    </div>
-    {% endif %}
 
-    {% else %}
-    <div class="empty-state">
-      <i class="ri-magic-line"></i>
-      <p>Belum ada data prediksi.</p>
-      <a href="{{ url_for('prediksi.form') }}" class="btn btn-accent btn-sm" style="margin-top:12px">
-        <i class="ri-add-line"></i> Buat Prediksi Pertama
-      </a>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-inbox fa-4x text-secondary opacity-3 mb-3 d-block"></i>
+          <p class="text-secondary">Belum ada data prediksi.</p>
+          <a href="{{ url_for('prediksi.form') }}" class="btn bg-gradient-primary mt-2">Buat Prediksi Pertama</a>
+        </div>
+        {% endif %}
+      </div>
     </div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}

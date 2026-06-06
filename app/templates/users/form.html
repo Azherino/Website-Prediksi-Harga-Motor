@@ -1,86 +1,120 @@
 {% extends "base.html" %}
 {% block title %}{% if mode=='tambah' %}Tambah User{% else %}Edit User{% endif %}{% endblock %}
 {% block page_title %}{% if mode=='tambah' %}Tambah User Baru{% else %}Edit User{% endif %}{% endblock %}
-{% block page_subtitle %}{% if mode=='tambah' %}Buat akun admin baru{% else %}Perbarui data user{% endif %}{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width:620px">
-  <div class="card-header">
-    <h3><i class="ri-user-settings-line"></i>
-      {% if mode=='tambah' %}Form Tambah User{% else %}Form Edit User{% endif %}
-    </h3>
-  </div>
-  <div class="card-body">
-    <form method="POST"
-      action="{% if mode=='tambah' %}{{ url_for('users.tambah') }}{% else %}{{ url_for('users.edit', user_id=user.id) }}{% endif %}">
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="nama">Nama Lengkap <span class="required">*</span></label>
-          <input id="nama" name="nama" type="text" class="form-control"
-                 value="{{ form_data.get('nama','') or (user.nama if user else '') }}"
-                 placeholder="Nama lengkap" required/>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="username">Username
-            {% if mode=='tambah' %}<span class="required">*</span>{% endif %}
-          </label>
-          <input id="username" name="username" type="text" class="form-control"
-                 value="{{ form_data.get('username','') or (user.username if user else '') }}"
-                 placeholder="Username unik"
-                 {% if mode=='edit' %}readonly style="background:#f5f6fa"{% else %}required{% endif %}/>
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-md-10">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3 mb-0">
+            <i class="fas fa-user-cog me-2"></i>{% if mode=='tambah' %}Form Tambah User{% else %}Form Edit User{% endif %}
+          </h6>
         </div>
       </div>
+      <div class="card-body p-4">
+        <form method="POST"
+          action="{% if mode=='tambah' %}{{ url_for('users.tambah') }}{% else %}{{ url_for('users.edit', user_id=user.id) }}{% endif %}">
 
-      <div class="form-group">
-        <label class="form-label" for="email">Email <span class="required">*</span></label>
-        <input id="email" name="email" type="email" class="form-control"
-               value="{{ form_data.get('email','') or (user.email if user else '') }}"
-               placeholder="email@putrahamid.com" required/>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="role">Role <span class="required">*</span></label>
-        <select id="role" name="role" class="form-control">
-          <option value="admin"      {% if (form_data.get('role') or (user.role if user else ''))=='admin'      %}selected{% endif %}>Admin</option>
-          <option value="superadmin" {% if (form_data.get('role') or (user.role if user else ''))=='superadmin' %}selected{% endif %}>Super Admin</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="password">
-            Password {% if mode=='tambah' %}<span class="required">*</span>{% endif %}
-          </label>
-          <div class="input-group">
-            <input id="password" name="password" type="password" class="form-control"
-                   placeholder="{% if mode=='edit' %}Kosongkan jika tidak diubah{% else %}Minimal 6 karakter{% endif %}"
-                   {% if mode=='tambah' %}required{% endif %}/>
-            <i class="ri-eye-line input-group-icon"
-               onclick="togglePassword('password','icon-pass')"></i>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="input-group input-group-outline is-filled my-3">
+                <label class="form-label" for="nama">Nama Lengkap <span class="text-danger">*</span></label>
+                <input id="nama" name="nama" type="text" class="form-control"
+                       value="{{ form_data.get('nama','') or (user.nama if user else '') }}"
+                       placeholder="Masukkan nama lengkap" required/>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="input-group input-group-outline is-filled my-3">
+                <label class="form-label" for="username">Username {% if mode=='tambah' %}<span class="text-danger">*</span>{% endif %}</label>
+                <input id="username" name="username" type="text" class="form-control"
+                       value="{{ form_data.get('username','') or (user.username if user else '') }}"
+                       placeholder="Username unik"
+                       {% if mode=='edit' %}readonly style="background-color: #f0f2f5 !important; color: #7b809a;"{% else %}required{% endif %}/>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="konfirmasi_password">Konfirmasi Password</label>
-          <div class="input-group">
-            <input id="konfirmasi_password" name="konfirmasi_password" type="password"
-                   class="form-control" placeholder="Ulangi password"
-                   {% if mode=='tambah' %}required{% endif %}/>
-            <i class="ri-eye-line input-group-icon"
-               onclick="togglePassword('konfirmasi_password','icon-confirm')"></i>
-          </div>
-        </div>
-      </div>
 
-      <div class="d-flex gap-12" style="margin-top:8px">
-        <button type="submit" class="btn btn-primary" id="btn-save-user">
-          <i class="ri-save-line"></i> Save
-        </button>
-        <a href="{{ url_for('users.index') }}" class="btn btn-outline" id="btn-cancel">
-          <i class="ri-close-line"></i> Cancel
-        </a>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="input-group input-group-outline is-filled my-3">
+                <label class="form-label" for="email">Email <span class="text-danger">*</span></label>
+                <input id="email" name="email" type="email" class="form-control"
+                       value="{{ form_data.get('email','') or (user.email if user else '') }}"
+                       placeholder="email@putrahamid.com" required/>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              {% if current_user.role == 'superadmin' %}
+              <div class="input-group input-group-static mb-4 mt-3">
+                <label for="role" class="ms-0">Role <span class="text-danger">*</span></label>
+                <select id="role" name="role" class="form-control">
+                  <option value="admin" {% if (form_data.get('role') or (user.role if user else ''))=='admin' %}selected{% endif %}>Admin</option>
+                  <option value="superadmin" {% if (form_data.get('role') or (user.role if user else ''))=='superadmin' %}selected{% endif %}>Super Admin</option>
+                </select>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="input-group input-group-outline is-filled my-3 position-relative">
+                <label class="form-label" for="password">
+                  Password {% if mode=='tambah' %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                <input id="password" name="password" type="password" class="form-control pe-5"
+                       placeholder="{% if mode=='edit' %}Kosongkan jika tidak diubah{% else %}Minimal 6 karakter{% endif %}"
+                       {% if mode=='tambah' %}required{% endif %}/>
+                <span class="position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer" onclick="togglePassword('password', this)">
+                  <i class="fas fa-eye text-secondary" id="toggle-password-icon"></i>
+                </span>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="input-group input-group-outline is-filled my-3 position-relative">
+                <label class="form-label" for="konfirmasi_password">
+                  Konfirmasi Password {% if mode=='tambah' %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                <input id="konfirmasi_password" name="konfirmasi_password" type="password" class="form-control pe-5"
+                       placeholder="Ulangi password"
+                       {% if mode=='tambah' %}required{% endif %}/>
+                <span class="position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer" onclick="togglePassword('konfirmasi_password', this)">
+                  <i class="fas fa-eye text-secondary" id="toggle-confirm-icon"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn bg-gradient-primary mb-0" id="btn-save-user">
+              <i class="fas fa-save me-1"></i> Simpan
+            </button>
+            <a href="{{ url_for('users.index') }}" class="btn btn-outline-secondary mb-0" id="btn-cancel">
+              <i class="fas fa-times me-1"></i> Batal
+            </a>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 </div>
+
+<script>
+function togglePassword(inputId, el) {
+  const input = document.getElementById(inputId);
+  const icon = el.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+</script>
 {% endblock %}

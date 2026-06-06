@@ -1,276 +1,317 @@
 {% extends "base.html" %}
 {% block title %}Evaluasi Model{% endblock %}
 {% block page_title %}Evaluasi Model{% endblock %}
-{% block page_subtitle %}Performa model Regresi Linear Berganda pada data test{% endblock %}
 
 {% block content %}
 
 {% if not models %}
-<div class="empty-state card" style="padding:48px">
-  <i class="ri-bar-chart-box-line" style="font-size:56px; color:var(--border)"></i>
-  <p style="font-size:15px; margin-top:12px">Belum ada model yang dilatih.</p>
-  <a href="{{ url_for('prediksi.training') }}" class="btn btn-primary" style="margin-top:16px">
-    <i class="ri-cpu-line"></i> Mulai Training Model
-  </a>
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-body text-center py-5">
+        <i class="fas fa-chart-bar fa-4x text-secondary opacity-3 mb-3 d-block"></i>
+        <p class="text-secondary">Belum ada model yang dilatih.</p>
+        <a href="{{ url_for('prediksi.training') }}" class="btn bg-gradient-primary mt-2">Mulai Training Model</a>
+      </div>
+    </div>
+  </div>
 </div>
 {% else %}
 
-<!-- Model Selector -->
-<div class="card mb-24">
-  <div class="card-header">
-    <h3><i class="ri-cpu-line"></i> Pilih Model</h3>
-    {% if model %}
-    <div class="d-flex gap-8">
-      <a href="{{ url_for('evaluasi.report', model_id=model.id, fmt='pdf') }}"
-         class="btn btn-outline btn-sm" id="btn-export-eval-pdf">
-        <i class="ri-file-pdf-line"></i> Export PDF
-      </a>
-      <a href="{{ url_for('evaluasi.report', model_id=model.id, fmt='xlsx') }}"
-         class="btn btn-success btn-sm" id="btn-export-eval-excel">
-        <i class="ri-file-excel-2-line"></i> Export Excel
-      </a>
-      <a href="{{ url_for('prediksi.report_koefisien', model_id=model.id) }}"
-         class="btn btn-primary btn-sm" id="btn-export-koef-pdf">
-        <i class="ri-function-line"></i> Report Koefisien
-      </a>
+<!-- Model Selector + Export -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body py-3">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <form method="GET">
+              <div class="input-group input-group-static">
+                <label for="model-select-eval" class="ms-0">Pilih Model</label>
+                <select name="model_id" class="form-control" id="model-select-eval" onchange="this.form.submit()">
+                  {% for m in models %}
+                  <option value="{{ m.id }}" {% if m.id==active_id %}selected{% endif %}>
+                    Model #{{ m.id }} — {{ m.dataset.nama_file[:25] if m.dataset else '(dataset dihapus)' }}
+                    (R²={{ '{:.4f}'.format(m.r2_score) }}, {{ m.created_at.strftime('%d %b %Y') }})
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </form>
+          </div>
+          {% if model %}
+          <div class="col-md-6 d-flex justify-content-end gap-2 mt-3 mt-md-0">
+            <a href="{{ url_for('evaluasi.report', model_id=model.id, fmt='pdf') }}" class="btn btn-sm btn-outline-dark mb-0" id="btn-export-eval-pdf">
+              <i class="fas fa-file-pdf me-1"></i>PDF
+            </a>
+            <a href="{{ url_for('evaluasi.report', model_id=model.id, fmt='xlsx') }}" class="btn btn-sm bg-gradient-success mb-0" id="btn-export-eval-excel">
+              <i class="fas fa-file-excel me-1"></i>Excel
+            </a>
+            <a href="{{ url_for('prediksi.report_koefisien', model_id=model.id) }}" class="btn btn-sm bg-gradient-primary mb-0" id="btn-export-koef-pdf">
+              <i class="fas fa-square-root-alt me-1"></i>Koefisien
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
-    {% endif %}
-  </div>
-  <div class="card-body">
-    <form method="GET" class="d-flex align-center gap-12">
-      <select name="model_id" class="form-control" style="max-width:400px" id="model-select-eval"
-              onchange="this.form.submit()">
-        {% for m in models %}
-        <option value="{{ m.id }}" {% if m.id==active_id %}selected{% endif %}>
-          Model #{{ m.id }} — {{ m.dataset.nama_file[:30] if m.dataset else '(dataset dihapus)' }}
-          (R²={{ '{:.4f}'.format(m.r2_score) }}, {{ m.created_at.strftime('%d %b %Y') }})
-        </option>
-        {% endfor %}
-      </select>
-    </form>
   </div>
 </div>
 
 {% if model %}
 <!-- Metric Cards -->
-<div class="metrics-grid mb-24">
+<div class="row mb-4">
   {% set r2 = model.r2_score %}
-  <div class="metric-card {% if r2>=0.9 %}metric-good{% elif r2>=0.7 %}metric-medium{% else %}metric-bad{% endif %}">
-    <div class="metric-value" style="color:{% if r2>=0.9 %}var(--success){% elif r2>=0.7 %}var(--warning){% else %}var(--danger){% endif %}">
-      {{ '{:.4f}'.format(r2) }}
-    </div>
-    <div class="metric-label">R² Score</div>
-    <div class="metric-badge">
-      <span class="badge {% if r2>=0.9 %}badge-success{% elif r2>=0.7 %}badge-warning{% else %}badge-danger{% endif %}">
-        {% if r2>=0.9 %}Sangat Baik{% elif r2>=0.7 %}Baik{% elif r2>=0.5 %}Cukup{% else %}Kurang{% endif %}
-      </span>
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card metric-card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape {% if r2>=0.9 %}bg-gradient-success{% elif r2>=0.7 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %} shadow text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-lightbulb text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">R² Score</p>
+          <h4 class="mb-0">{{ '{:.4f}'.format(r2) }}</h4>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <span class="badge badge-sm {% if r2>=0.9 %}bg-gradient-success{% elif r2>=0.7 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}">
+          {% if r2>=0.9 %}Sangat Baik{% elif r2>=0.7 %}Baik{% elif r2>=0.5 %}Cukup{% else %}Kurang{% endif %}
+        </span>
+      </div>
     </div>
   </div>
-  <div class="metric-card metric-good">
-    <div class="metric-value" style="color:var(--primary); font-size:20px">
-      Rp {{ '{:,.0f}'.format(model.mae).replace(',','.') }}
+
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card metric-card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape bg-gradient-primary shadow text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-chart-line text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">MAE</p>
+          <h6 class="mb-0">Rp {{ '{:,.0f}'.format(model.mae).replace(',','.') }}</h6>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <p class="mb-0 text-xs text-secondary">Mean Absolute Error</p>
+      </div>
     </div>
-    <div class="metric-label">MAE</div>
-    <div class="metric-badge"><span class="badge badge-info">Mean Absolute Error</span></div>
   </div>
-  <div class="metric-card metric-medium">
-    <div class="metric-value" style="color:var(--primary); font-size:20px">
-      Rp {{ '{:,.0f}'.format(model.rmse).replace(',','.') }}
+
+  <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="card metric-card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape bg-gradient-warning shadow text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-chart-area text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">RMSE</p>
+          <h6 class="mb-0">Rp {{ '{:,.0f}'.format(model.rmse).replace(',','.') }}</h6>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <p class="mb-0 text-xs text-secondary">Root Mean Square Error</p>
+      </div>
     </div>
-    <div class="metric-label">RMSE</div>
-    <div class="metric-badge"><span class="badge badge-warning">Root Mean Sq. Error</span></div>
   </div>
-  <div class="metric-card {% if model.mape<15 %}metric-good{% elif model.mape<30 %}metric-medium{% else %}metric-bad{% endif %}">
-    <div class="metric-value" style="color:{% if model.mape<15 %}var(--success){% elif model.mape<30 %}var(--warning){% else %}var(--danger){% endif %}">
-      {{ '{:.2f}'.format(model.mape) }}%
-    </div>
-    <div class="metric-label">MAPE</div>
-    <div class="metric-badge">
-      <span class="badge {% if model.mape<15 %}badge-success{% elif model.mape<30 %}badge-warning{% else %}badge-danger{% endif %}">
-        {% if model.mape<15 %}Akurat{% elif model.mape<30 %}Cukup{% else %}Kurang{% endif %}
-      </span>
+
+  <div class="col-xl-3 col-sm-6">
+    <div class="card metric-card">
+      <div class="card-header p-3 pt-2">
+        <div class="icon icon-lg icon-shape {% if model.mape<15 %}bg-gradient-success{% elif model.mape<30 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %} shadow text-center border-radius-xl mt-n4 position-absolute">
+          <i class="fas fa-percent text-white"></i>
+        </div>
+        <div class="text-end pt-1">
+          <p class="text-sm mb-0 text-capitalize">MAPE</p>
+          <h4 class="mb-0">{{ '{:.2f}'.format(model.mape) }}%</h4>
+        </div>
+      </div>
+      <hr class="dark horizontal my-0">
+      <div class="card-footer p-3">
+        <span class="badge badge-sm {% if model.mape<15 %}bg-gradient-success{% elif model.mape<30 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}">
+          {% if model.mape<15 %}Akurat{% elif model.mape<30 %}Cukup{% else %}Kurang{% endif %}
+        </span>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Charts -->
-<div class="charts-grid mb-24">
-  <!-- Scatter: Aktual vs Prediksi -->
-  <div class="card">
-    <div class="card-header">
-      <h3><i class="ri-bubble-chart-line"></i> Scatter Plot: Aktual vs Prediksi</h3>
-    </div>
-    <div class="card-body">
-      <div class="chart-container" style="height:300px">
-        <canvas id="chart-scatter"></canvas>
+<div class="row mt-2 mb-4">
+  <div class="col-lg-6 mb-4">
+    <div class="card z-index-2">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+          <div class="chart">
+            <canvas id="chart-scatter" class="chart-canvas" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-0">Scatter Plot: Aktual vs Prediksi</h6>
+        <p class="text-sm text-secondary">Kedekatan titik ke garis diagonal = akurasi model</p>
       </div>
     </div>
   </div>
-
-  <!-- Residual Plot -->
-  <div class="card">
-    <div class="card-header">
-      <h3><i class="ri-bar-chart-horizontal-line"></i> Residual Plot (Error Distribution)</h3>
-    </div>
-    <div class="card-body">
-      <div class="chart-container" style="height:300px">
-        <canvas id="chart-residual"></canvas>
+  <div class="col-lg-6 mb-4">
+    <div class="card z-index-2">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+        <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+          <div class="chart">
+            <canvas id="chart-residual" class="chart-canvas" height="200"></canvas>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Coefficient Table -->
-<div class="card mb-24">
-  <div class="card-header">
-    <h3><i class="ri-function-line"></i> Koefisien Regresi</h3>
-  </div>
-  <div class="card-body" style="padding:0">
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr><th>Variabel</th><th>Koefisien (β)</th><th>Pengaruh</th></tr>
-        </thead>
-        <tbody>
-          <tr style="background:rgba(30,58,95,.03)">
-            <td class="fw-600">Intercept (β₀)</td>
-            <td>{{ '{:,.4f}'.format(model.intercept).replace(',','.') }}</td>
-            <td>–</td>
-          </tr>
-          {% for name, coef in (model.koefisien or {}).items() %}
-          <tr>
-            <td>{{ name }}</td>
-            <td class="{% if coef>0 %}text-success{% else %}text-danger{% endif %} fw-600">
-              {{ '{:,.4f}'.format(coef).replace(',','.') }}
-            </td>
-            <td>
-              <span class="badge {% if coef>0 %}badge-success{% else %}badge-danger{% endif %}">
-                {% if coef>0 %}↑ Positif{% else %}↓ Negatif{% endif %}
-              </span>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="card-body">
+        <h6 class="mb-0">Residual Plot (Error Distribution)</h6>
+        <p class="text-sm text-secondary">Distribusi error model terhadap data test</p>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Model Info -->
-<div class="card">
-  <div class="card-header"><h3><i class="ri-information-line"></i> Informasi Model</h3></div>
-  <div class="card-body">
-    <div class="form-row">
-      <div>
-        <p class="text-muted fs-12 mb-4">Dataset</p>
-        <p class="fw-600">{{ model.dataset.nama_file if model.dataset else '(dataset dihapus)' }}</p>
+<!-- Coefficient Table + Model Info -->
+<div class="row mb-4">
+  <div class="col-lg-8 mb-4">
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">
+            <i class="fas fa-square-root-alt me-2"></i>Koefisien Regresi
+          </h6>
+        </div>
       </div>
-      <div>
-        <p class="text-muted fs-12 mb-4">Rasio Train / Test</p>
-        <p class="fw-600">{{ (model.rasio_train*100)|int }}% / {{ (100-model.rasio_train*100)|int }}%</p>
+      <div class="card-body px-0 pb-2">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Variabel</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Koefisien (β)</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pengaruh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:rgba(0,0,0,0.02);">
+                <td class="ps-3"><p class="text-xs font-weight-bold mb-0">Intercept (β₀)</p></td>
+                <td class="text-center"><p class="text-xs font-weight-bold mb-0">{{ '{:,.4f}'.format(model.intercept).replace(',','.') }}</p></td>
+                <td class="text-center"><span class="badge badge-sm bg-gradient-secondary">–</span></td>
+              </tr>
+              {% for name, coef in (model.koefisien or {}).items() %}
+              <tr>
+                <td class="ps-3"><p class="text-xs font-weight-bold mb-0">{{ name }}</p></td>
+                <td class="text-center">
+                  <p class="text-xs font-weight-bold mb-0 {% if coef>0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ '{:,.4f}'.format(coef).replace(',','.') }}
+                  </p>
+                </td>
+                <td class="text-center">
+                  <span class="badge badge-sm {% if coef>0 %}bg-gradient-success{% else %}bg-gradient-danger{% endif %}">
+                    {% if coef>0 %}<i class="fas fa-arrow-up me-1"></i>Positif{% else %}<i class="fas fa-arrow-down me-1"></i>Negatif{% endif %}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div>
-        <p class="text-muted fs-12 mb-4">Jumlah Data Training</p>
-        <p class="fw-600">{{ model.train_size }} baris</p>
+    </div>
+  </div>
+
+  <!-- Model Info -->
+  <div class="col-lg-4 mb-4">
+    <div class="card h-100">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">
+            <i class="fas fa-info-circle me-2"></i>Informasi Model
+          </h6>
+        </div>
       </div>
-      <div>
-        <p class="text-muted fs-12 mb-4">Jumlah Data Test</p>
-        <p class="fw-600">{{ model.test_size }} baris</p>
-      </div>
-      <div>
-        <p class="text-muted fs-12 mb-4">Tanggal Training</p>
-        <p class="fw-600">{{ model.created_at.strftime('%d %B %Y, %H:%M') }}</p>
-      </div>
-      <div>
-        <p class="text-muted fs-12 mb-4">MSE</p>
-        <p class="fw-600">Rp {{ '{:,.0f}'.format(model.mse).replace(',','.') }}</p>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between px-0 border-0 py-2">
+            <span class="text-xs text-secondary">Dataset</span>
+            <span class="text-xs font-weight-bold text-dark">{{ model.dataset.nama_file if model.dataset else '(dihapus)' }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 border-0 py-2">
+            <span class="text-xs text-secondary">Rasio Train/Test</span>
+            <span class="text-xs font-weight-bold text-dark">{{ (model.rasio_train*100)|int }}% / {{ (100-model.rasio_train*100)|int }}%</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 border-0 py-2">
+            <span class="text-xs text-secondary">Data Training</span>
+            <span class="text-xs font-weight-bold text-dark">{{ model.train_size }} baris</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 border-0 py-2">
+            <span class="text-xs text-secondary">Data Test</span>
+            <span class="text-xs font-weight-bold text-dark">{{ model.test_size }} baris</span>
+          </li>
+
+          <li class="list-group-item d-flex justify-content-between px-0 border-0 py-2">
+            <span class="text-xs text-secondary">Tanggal Training</span>
+            <span class="text-xs font-weight-bold text-dark">{{ model.created_at.strftime('%d %b %Y') }}</span>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
 </div>
 {% endif %}
-
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 {% if model and model.y_test_data %}
 <script>
-Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
-Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+var yTest = {{ model.y_test_data | tojson }};
+var yPred = {{ model.y_pred_data | tojson }};
 
-const yTest = {{ model.y_test_data | tojson }};
-const yPred = {{ model.y_pred_data | tojson }};
-
-// Scatter plot
-const scatterData = yTest.map((y, i) => ({ x: y, y: yPred[i] }));
-const maxVal = Math.max(...yTest, ...yPred);
-const minVal = Math.min(...yTest, ...yPred);
+var scatterData = yTest.map(function(y, i) { return { x: y, y: yPred[i] }; });
+var maxVal = Math.max.apply(null, yTest.concat(yPred));
+var minVal = Math.min.apply(null, yTest.concat(yPred));
 
 new Chart(document.getElementById('chart-scatter'), {
   type: 'scatter',
-  data: {
-    datasets: [
-      {
-        label: 'Aktual vs Prediksi',
-        data: scatterData,
-        backgroundColor: 'rgba(56, 189, 248, 0.6)',
-        pointRadius: 5
-      },
-      {
-        label: 'Garis Ideal',
-        data: [{ x: minVal, y: minVal }, { x: maxVal, y: maxVal }],
-        type: 'line',
-        borderColor: '#FBBF24',
-        borderWidth: 2,
-        pointRadius: 0,
-        borderDash: [6, 3]
-      }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { labels: { font: { size: 11 } } } },
+  data: { datasets: [
+    { label: 'Aktual vs Prediksi', data: scatterData, backgroundColor: 'rgba(255,255,255,0.7)', pointRadius: 4 },
+    { label: 'Garis Ideal', data: [{x:minVal,y:minVal},{x:maxVal,y:maxVal}], type: 'line',
+      borderColor: 'rgba(255,255,255,0.9)', borderWidth: 2, pointRadius: 0, borderDash: [6,3] }
+  ]},
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#fff', font: { size: 11 } } } },
     scales: {
-      x: {
-        title: { display: true, text: 'Harga Aktual (Rp)', font: { size: 11 } },
-        ticks: { callback: v => (v/1e6).toFixed(0) + 'Jt', font: { size: 10 } }
-      },
-      y: {
-        title: { display: true, text: 'Harga Prediksi (Rp)', font: { size: 11 } },
-        ticks: { callback: v => (v/1e6).toFixed(0) + 'Jt', font: { size: 10 } }
-      }
+      x: { title: { display: true, text: 'Harga Aktual (Rp)', color: '#fff', font: { size: 10 } },
+           ticks: { callback: function(v){ return (v/1e6).toFixed(0)+'Jt'; }, color: '#fff', font: { size: 9 } },
+           grid: { color: 'rgba(255,255,255,0.1)' } },
+      y: { title: { display: true, text: 'Harga Prediksi (Rp)', color: '#fff', font: { size: 10 } },
+           ticks: { callback: function(v){ return (v/1e6).toFixed(0)+'Jt'; }, color: '#fff', font: { size: 9 } },
+           grid: { color: 'rgba(255,255,255,0.1)' } }
     }
   }
 });
 
-// Residual plot (histogram of errors)
-const residuals = yTest.map((y, i) => y - yPred[i]);
-const buckets = 15;
-const minR = Math.min(...residuals), maxR = Math.max(...residuals);
-const step  = (maxR - minR) / buckets;
-const bins  = Array.from({ length: buckets }, (_, i) => minR + i * step);
-const counts = bins.map((b, i) => residuals.filter(r => r >= b && r < b + step).length);
+var residuals = yTest.map(function(y, i) { return y - yPred[i]; });
+var buckets = 15;
+var minR = Math.min.apply(null, residuals), maxR = Math.max.apply(null, residuals);
+var step  = (maxR - minR) / buckets;
+var bins  = Array.from({ length: buckets }, function(_, i) { return minR + i * step; });
+var counts = bins.map(function(b) { return residuals.filter(function(r){ return r >= b && r < b + step; }).length; });
 
 new Chart(document.getElementById('chart-residual'), {
   type: 'bar',
-  data: {
-    labels: bins.map(b => (b/1e6).toFixed(1) + 'Jt'),
-    datasets: [{
-      label: 'Frekuensi Error',
-      data: counts,
-      backgroundColor: 'rgba(59, 130, 246, 0.65)',
-      borderColor: 'rgba(59, 130, 246, 0.9)',
-      borderWidth: 1, borderRadius: 4
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
+  data: { labels: bins.map(function(b){ return (b/1e6).toFixed(1)+'Jt'; }),
+          datasets: [{ label: 'Frekuensi Error', data: counts, backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: 4 }] },
+  options: { responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      x: { title: { display: true, text: 'Residual (Rp)', font: { size: 11 } },
-           ticks: { font: { size: 9 } } },
-      y: { title: { display: true, text: 'Frekuensi', font: { size: 11 } } }
+      x: { title: { display: true, text: 'Residual (Rp)', color: '#fff', font: { size: 10 } },
+           ticks: { color: '#fff', font: { size: 8 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
+      y: { title: { display: true, text: 'Frekuensi', color: '#fff', font: { size: 10 } },
+           ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }
     }
   }
 });

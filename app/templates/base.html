@@ -1,147 +1,220 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>{% block title %}Sistem Prediksi Harga Motor{% endblock %} — PT Putra Hamid</title>
-  <meta name="description" content="Sistem prediksi harga motor bekas PT Putra Hamid menggunakan metode Regresi Linear Berganda."/>
-  <!-- Remix Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
+  <!-- Font Awesome -->
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <!-- Material Dashboard CSS -->
+  <link id="pagestyle" href="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/css/material-dashboard.css" rel="stylesheet" />
+  
+  <style>
+    .sidenav .nav-link.active { background: linear-gradient(195deg, #42424a 0%, #191919 100%) !important; }
+    .sidenav .nav-link.active .nav-link-text { color: #fff !important; }
+    .sidenav .nav-link .sidenav-icon { width: 20px; text-align: center; }
+    .table thead th { border-bottom: 1px solid #dee2e6; font-size: 0.65rem; }
+    .table td { vertical-align: middle; }
+    .progress { height: 6px; }
+    .upload-zone {
+      border: 2px dashed #dee2e6; border-radius: 12px; padding: 48px 24px;
+      text-align: center; cursor: pointer; transition: all 0.3s; background: #f8f9fa;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: #344767; background: #e8eaf6; }
+    .upload-zone .upload-icon { font-size: 48px; color: #344767; margin-bottom: 12px; }
+    .metric-card { transition: transform 0.3s; }
+    .metric-card:hover { transform: translateY(-4px); }
+    .pagination .page-item.active .page-link { background: linear-gradient(195deg, #42424a 0%, #191919 100%); border: none; }
+    .modal-backdrop-custom {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 1050; display: none; align-items: center; justify-content: center;
+    }
+    .modal-backdrop-custom.show { display: flex; }
+    .icon-shape i { font-size: 1.2rem; }
+    .icon-shape i.fas, .icon-shape i.far, .icon-shape i.fab, .icon-shape i.fa, .icon-shape i.fa-solid {
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free", "Font Awesome 5 Brands", sans-serif !important;
+    }
+  </style>
+  
   {% block head %}{% endblock %}
 </head>
-<body>
-<div class="app-wrapper">
-
-  <!-- ── Sidebar ───────────────────────────────────── -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PT Putra Hamid Logo" class="logo-img">
+<body class="g-sidenav-show bg-gray-200">
+  
+  <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-gradient-dark" id="sidenav-main">
+    <div class="sidenav-header">
+      <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+      <a class="navbar-brand m-0 py-3 px-4 d-flex align-items-center" href="{{ url_for('dashboard.index') }}">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo PT Putra Hamid" style="max-height: 35px; border-radius: 5px;">
+        <span class="ms-2 font-weight-bold text-white fs-6">PT Putra Hamid</span>
+      </a>
     </div>
+    <hr class="horizontal light mt-0 mb-2">
+    <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+      <ul class="navbar-nav">
 
-    <nav class="sidebar-nav">
-      <div class="nav-section-title">Main</div>
+        <li class="nav-item mt-3">
+          <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-6">Main</h6>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('dashboard.index') }}" id="nav-dashboard">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-gauge-high sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Dashboard</span>
+          </a>
+        </li>
 
-      <div class="nav-item">
-        <a href="{{ url_for('dashboard.index') }}" class="nav-link" id="nav-dashboard">
-          <i class="ri-dashboard-3-line"></i>
-          <span>Dashboard</span>
-        </a>
-      </div>
+        <li class="nav-item mt-3">
+          <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-6">Management</h6>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('users.index') }}" id="nav-users">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-users sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Kelola User</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('dataset.index') }}" id="nav-dataset">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-database sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Import Dataset</span>
+          </a>
+        </li>
 
-      <div class="nav-section-title" style="margin-top:8px">Management</div>
+        <li class="nav-item mt-3">
+          <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-6">Machine Learning</h6>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('prediksi.training') }}" id="nav-training">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-microchip sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Training Model</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('prediksi.form') }}" id="nav-prediksi">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-magic sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Prediksi Harga</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('prediksi.hasil') }}" id="nav-hasil">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-list-alt sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Hasil Prediksi</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{{ url_for('evaluasi.index') }}" id="nav-evaluasi">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="fas fa-chart-bar sidenav-icon opacity-10"></i>
+            </div>
+            <span class="nav-link-text ms-1">Evaluasi Model</span>
+          </a>
+        </li>
 
-      <div class="nav-item">
-        <a href="{{ url_for('users.index') }}" class="nav-link" id="nav-users">
-          <i class="ri-group-line"></i>
-          <span>Kelola User</span>
-        </a>
-      </div>
-
-      <div class="nav-item">
-        <a href="{{ url_for('dataset.index') }}" class="nav-link" id="nav-dataset">
-          <i class="ri-database-2-line"></i>
-          <span>Import Dataset</span>
-        </a>
-      </div>
-
-      <div class="nav-section-title" style="margin-top:8px">Machine Learning</div>
-
-      <div class="nav-item">
-        <a href="{{ url_for('prediksi.training') }}" class="nav-link" id="nav-training">
-          <i class="ri-cpu-line"></i>
-          <span>Training Model</span>
-        </a>
-      </div>
-
-      <div class="nav-item">
-        <a href="{{ url_for('prediksi.form') }}" class="nav-link" id="nav-prediksi">
-          <i class="ri-magic-line"></i>
-          <span>Prediksi Harga</span>
-        </a>
-      </div>
-
-      <div class="nav-item">
-        <a href="{{ url_for('prediksi.hasil') }}" class="nav-link" id="nav-hasil">
-          <i class="ri-list-check-2"></i>
-          <span>Hasil Prediksi</span>
-        </a>
-      </div>
-
-      <div class="nav-item">
-        <a href="{{ url_for('evaluasi.index') }}" class="nav-link" id="nav-evaluasi">
-          <i class="ri-bar-chart-box-line"></i>
-          <span>Evaluasi Model</span>
-        </a>
+      </ul>
+    </div>
+  </aside>
+  
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+      <div class="container-fluid py-1 px-3">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+            <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">halaman</a></li>
+            <li class="breadcrumb-item text-sm text-dark active" aria-current="page">{% block page_title %}Dashboard{% endblock %}</li>
+          </ol>
+        </nav>
+        <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+          <div class="ms-md-auto pe-md-3 d-flex align-items-center"></div>
+          <ul class="navbar-nav justify-content-end">
+            <li class="nav-item d-flex align-items-center me-3">
+              <span class="nav-link text-body font-weight-bold px-0">
+                <i class="fas fa-user-circle me-1"></i>
+                <span class="d-sm-inline d-none text-sm">{{ current_user.nama }}</span>
+              </span>
+            </li>
+            <li class="nav-item d-flex align-items-center">
+              <form action="{{ url_for('auth.logout') }}" method="get" class="d-inline">
+                <button type="submit" class="btn btn-sm bg-gradient-danger mb-0">
+                  <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
 
-  </aside>
-
-  <!-- ── Main Content ───────────────────────────────── -->
-  <div class="main-content">
-
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-        <p>{% block page_subtitle %}Selamat datang di sistem prediksi harga motor bekas.{% endblock %}</p>
-      </div>
-      <div class="topbar-right">
-        <span class="topbar-date">
-          <i class="ri-calendar-line"></i>
-          <span id="current-date"></span>
-        </span>
-        <div class="admin-info" style="margin-left: 12px; margin-right: 12px; display: flex; align-items: center; gap: 12px; padding-left: 16px; border-left: 1px solid var(--border);">
-          <div class="admin-avatar" style="width: 36px; height: 36px; font-size: 14px;">{{ current_user.nama[0].upper() }}</div>
-          <div class="admin-details" style="text-align: left;">
-            <span class="admin-name" style="font-size: 13px;">{{ current_user.nama }}</span>
-            <span class="admin-role" style="font-size: 11px;">{{ current_user.role|capitalize }}</span>
-          </div>
-        </div>
-        <form action="{{ url_for('auth.logout') }}" method="get">
-          <button type="submit" class="btn-logout">
-            <i class="ri-logout-box-line"></i> Logout
-          </button>
-        </form>
-      </div>
-    </header>
-
-    <!-- Flash messages -->
-    <div style="padding: 0 28px;">
+    <div class="container-fluid py-4">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" style="margin-top:16px">
-              <i class="ri-{% if category=='success' %}checkbox-circle{% elif category=='danger' %}error-warning{% elif category=='warning' %}alert{% else %}information{% endif %}-line"></i>
-              {{ message }}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} alert-dismissible text-white" role="alert">
+              <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'exclamation-triangle' }} me-2"></i>
+              <span class="text-sm">{{ message }}</span>
+              <button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
             </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
-    </div>
-
-    <!-- Page Body -->
-    <div class="page-content">
+      
       {% block content %}{% endblock %}
+      
+      <footer class="footer pt-3 pb-0">
+        <div class="container-fluid">
+          <div class="row align-items-center justify-content-lg-between">
+            <div class="col-lg-6 mb-lg-0 mb-4">
+              <div class="copyright text-center text-sm text-muted text-lg-start">
+                &copy; 2026 PT Putra Hamid — Sistem Prediksi Harga Motor Bekas
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
-
-  </div>
-</div>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toast-container"></div>
-
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script>
-  // Date display
-  const d = new Date();
-  document.getElementById('current-date').textContent =
-    d.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-</script>
-{% block scripts %}{% endblock %}
+  </main>
+  
+  <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/js/core/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/js/core/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/js/material-dashboard.min.js"></script>
+  
+  <script>
+  (function() {
+    var path = window.location.pathname;
+    var map = [
+      { prefix: '/users',            id: 'nav-users'    },
+      { prefix: '/dataset',          id: 'nav-dataset'  },
+      { prefix: '/prediksi/training',id: 'nav-training' },
+      { prefix: '/prediksi/hasil',   id: 'nav-hasil'    },
+      { prefix: '/prediksi/form',    id: 'nav-prediksi' },
+      { prefix: '/evaluasi',         id: 'nav-evaluasi' },
+      { prefix: '/',                 id: 'nav-dashboard'},
+    ];
+    for (var i = 0; i < map.length; i++) {
+      if (path === map[i].prefix || path.startsWith(map[i].prefix + '/')) {
+        var el = document.getElementById(map[i].id);
+        if (el) el.classList.add('active');
+        break;
+      }
+    }
+  })();
+  </script>
+  
+  {% block scripts %}{% endblock %}
 </body>
 </html>

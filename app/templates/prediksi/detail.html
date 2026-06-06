@@ -1,81 +1,165 @@
 {% extends "base.html" %}
 {% block title %}Detail Prediksi #{{ p.id }}{% endblock %}
 {% block page_title %}Hasil Prediksi{% endblock %}
-{% block page_subtitle %}Detail hasil prediksi harga motor bekas{% endblock %}
 
 {% block content %}
-
-<!-- Price Result -->
-<div class="result-price" style="max-width:500px; margin:0 auto 24px">
-  <div class="price-label">✨ Estimasi Harga Motor Bekas</div>
-  <div class="price-value" id="result-price-value">
-    Rp {{ '{:,}'.format(p.harga_prediksi).replace(',','.') }}
-  </div>
-  {% if p.harga_aktual %}
-  <div style="margin-top:12px; font-size:13px; opacity:.85">
-    Harga Aktual: Rp {{ '{:,}'.format(p.harga_aktual).replace(',','.') }}
-    &nbsp;|&nbsp;
-    Selisih: Rp {{ '{:,}'.format((p.harga_prediksi - p.harga_aktual)|abs).replace(',','.') }}
-  </div>
-  {% endif %}
-</div>
-
-<!-- Detail Card -->
-<div class="card" style="max-width:700px; margin:0 auto">
-  <div class="card-header">
-    <h3><i class="ri-file-list-3-line"></i> Detail Input Motor</h3>
-    <div class="d-flex gap-8">
-      <a href="{{ url_for('prediksi.report_prediksi', prediksi_id=p.id, fmt='pdf') }}"
-         class="btn btn-outline btn-sm" id="btn-export-prediksi-pdf">
-        <i class="ri-file-pdf-line"></i> Export PDF
-      </a>
-      <a href="{{ url_for('prediksi.form') }}"
-         class="btn btn-accent btn-sm" id="btn-new-predict">
-        <i class="ri-add-line"></i> New Prediction
-      </a>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    
+    <!-- Left Column: Input Details -->
+    <div class="col-lg-7 mb-4">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="fas fa-motorcycle me-2"></i>Spesifikasi & Detail Motor
+            </h6>
+          </div>
+        </div>
+        <div class="card-body px-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0">
+              <tbody>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3" style="width: 40%;">Merek Motor</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="badge bg-gradient-primary">{{ p.merek_motor }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Model Motor</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="badge bg-gradient-secondary">{{ p.model_motor or '-' }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Tipe Motor</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-sm font-weight-bold text-dark">{{ p.tipe_motor }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Tahun Produksi</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-sm font-weight-bold text-dark">{{ p.tahun_produksi }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Kapasitas Mesin</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-sm font-weight-bold text-dark">{{ p.kapasitas_mesin }} cc</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Jarak Tempuh</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-sm font-weight-bold text-dark">{{ '{:,.0f}'.format(p.jarak_tempuh).replace(',','.') }} km</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Kondisi Fisik</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-sm font-weight-bold text-dark">{{ p.kondisi_fisik }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Kelengkapan Surat</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-sm font-weight-bold text-dark">{{ p.kelengkapan_surat }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Status Pajak</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="badge bg-gradient-{% if p.pajak=='Aktif' %}success{% else %}danger{% endif %} text-xxs">
+                      <i class="fas {% if p.pajak=='Aktif' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                      {{ p.pajak }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4 py-3">Tanggal Prediksi</td>
+                  <td class="align-middle ps-4 py-3">
+                    <span class="text-xs text-secondary">{{ p.created_at.strftime('%d %B %Y, %H:%M') }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="card-body" style="padding:0">
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr><th>Parameter</th><th>Nilai</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="fw-600">Tahun Produksi</td><td>{{ p.tahun_produksi }}</td></tr>
-          <tr><td class="fw-600">Kapasitas Mesin</td><td>{{ p.kapasitas_mesin }} cc</td></tr>
-          <tr><td class="fw-600">Jarak Tempuh</td>
-              <td>{{ '{:,.0f}'.format(p.jarak_tempuh).replace(',','.') }} km</td></tr>
-          <tr><td class="fw-600">Merek Motor</td>
-              <td><span class="badge badge-primary">{{ p.merek_motor }}</span></td></tr>
-          <tr><td class="fw-600">Tipe Motor</td><td>{{ p.tipe_motor }}</td></tr>
-          <tr><td class="fw-600">Model Motor</td>
-              <td><span class="badge badge-primary">{{ p.model_motor or '-' }}</span></td></tr>
-          <tr><td class="fw-600">Kondisi Fisik</td><td>{{ p.kondisi_fisik }}</td></tr>
-          <tr><td class="fw-600">Kelengkapan Surat</td><td>{{ p.kelengkapan_surat }}</td></tr>
-          <tr><td class="fw-600">Pajak</td>
-              <td><span class="badge {% if p.pajak=='Aktif' %}badge-success{% else %}badge-danger{% endif %}">
-                {% if p.pajak=='Aktif' %}🟢{% else %}🔴{% endif %} {{ p.pajak }}
-              </span></td></tr>
-          <tr style="background:rgba(30,58,95,.04)">
-            <td class="fw-700" style="color:var(--primary)">HARGA PREDIKSI</td>
-            <td class="fw-700" style="color:var(--accent); font-size:16px">
+
+    <!-- Right Column: Prediction Results & Actions -->
+    <div class="col-lg-5 mb-4">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="fas fa-calculator me-2"></i>Hasil Estimasi Harga
+            </h6>
+          </div>
+        </div>
+        <div class="card-body d-flex flex-column justify-content-between p-4">
+          <div class="text-center my-auto py-4">
+            <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mb-4 d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px;">
+              <i class="fas fa-tags text-white fa-2x"></i>
+            </div>
+            
+            <p class="text-sm text-uppercase text-secondary font-weight-bold mb-1">Estimasi Harga Motor Bekas</p>
+            <h2 class="text-primary font-weight-bolder text-gradient mb-3" id="result-price-value">
               Rp {{ '{:,}'.format(p.harga_prediksi).replace(',','.') }}
-            </td>
-          </tr>
-          <tr>
-            <td class="fw-600 text-muted fs-12">Tanggal Prediksi</td>
-            <td class="text-muted fs-12">{{ p.created_at.strftime('%d %B %Y, %H:%M') }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+            </h2>
 
-<div style="text-align:center; margin-top:20px">
-  <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-outline" id="btn-view-all-hasil">
-    <i class="ri-arrow-left-line"></i> Back to All Results
-  </a>
+            {% if p.harga_aktual %}
+            <div class="mt-4 pt-3 border-top border-light">
+              <div class="row">
+                <div class="col-6 text-center border-end border-light">
+                  <p class="text-xs text-secondary font-weight-bold mb-1">Harga Aktual</p>
+                  <h5 class="text-dark font-weight-bold mb-0">
+                    Rp {{ '{:,}'.format(p.harga_aktual).replace(',','.') }}
+                  </h5>
+                </div>
+                <div class="col-6 text-center">
+                  <p class="text-xs text-secondary font-weight-bold mb-1">Selisih Estimasi</p>
+                  <h5 class="text-danger font-weight-bold mb-0">
+                    Rp {{ '{:,}'.format((p.harga_prediksi - p.harga_aktual)|abs).replace(',','.') }}
+                  </h5>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="border-top pt-3 mt-4">
+            <div class="row g-2">
+              <div class="col-6">
+                <a href="{{ url_for('prediksi.report_prediksi', prediksi_id=p.id, fmt='pdf') }}" 
+                   class="btn btn-outline-danger w-100 mb-0 d-flex align-items-center justify-content-center" 
+                   id="btn-export-prediksi-pdf">
+                  <i class="fas fa-file-pdf me-2"></i> Export PDF
+                </a>
+              </div>
+              <div class="col-6">
+                <a href="{{ url_for('prediksi.form') }}" 
+                   class="btn bg-gradient-info w-100 mb-0 d-flex align-items-center justify-content-center" 
+                   id="btn-new-predict">
+                  <i class="fas fa-plus me-2"></i> Prediksi Baru
+                </a>
+              </div>
+            </div>
+            <div class="text-center mt-3">
+              <a href="{{ url_for('prediksi.hasil') }}" class="btn btn-link text-secondary text-sm mb-0" id="btn-view-all-hasil">
+                <i class="fas fa-arrow-left me-1"></i> Kembali ke Riwayat Hasil
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

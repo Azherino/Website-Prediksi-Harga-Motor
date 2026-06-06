@@ -1,122 +1,133 @@
 {% extends "base.html" %}
 {% block title %}Kelola User{% endblock %}
 {% block page_title %}Kelola User{% endblock %}
-{% block page_subtitle %}Manajemen akun admin yang dapat mengakses sistem{% endblock %}
 
 {% block content %}
-<div class="card">
-  <div class="card-header">
-    <div class="d-flex align-center gap-12">
-      <form method="GET" class="search-bar">
-        <i class="ri-search-line"></i>
-        <input id="search-user" name="q" type="text" class="form-control"
-               placeholder="Search users..." value="{{ search }}"/>
-      </form>
-    </div>
-    {% if current_user.role == 'superadmin' %}
-    <a href="{{ url_for('users.tambah') }}" class="btn btn-primary" id="btn-add-user">
-      <i class="ri-user-add-line"></i> Add User
-    </a>
-    {% endif %}
-  </div>
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 d-flex align-items-center justify-content-between px-3">
+          <h6 class="text-white text-capitalize mb-0">
+            <i class="fas fa-users me-2"></i>Manajemen Akun User
+          </h6>
+          {% if current_user.role == 'superadmin' %}
+          <a href="{{ url_for('users.tambah') }}" class="btn btn-sm bg-gradient-primary mb-0" id="btn-add-user">
+            <i class="fas fa-user-plus me-1"></i>Add User
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body px-4 pt-3 pb-2">
+        <form method="GET" class="mb-3" style="max-width:320px;">
+          <div class="input-group input-group-outline">
+            <label class="form-label">Cari user...</label>
+            <input id="search-user" name="q" type="text" class="form-control" value="{{ search }}">
+          </div>
+        </form>
 
-  <div class="card-body" style="padding:0">
-    {% if users.items %}
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>No</th><th>Nama</th><th>Username</th>
-            <th>Email</th><th>Role</th><th>Dibuat</th>
-            {% if current_user.role == 'superadmin' %}<th>Actions</th>{% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in users.items %}
-          <tr>
-            <td>{{ loop.index + (users.page-1)*users.per_page }}</td>
-            <td class="fw-600">{{ user.nama }}</td>
-            <td><code>{{ user.username }}</code></td>
-            <td>{{ user.email }}</td>
-            <td>
-              <span class="badge {% if user.role=='superadmin' %}badge-warning{% else %}badge-info{% endif %}">
-                {{ user.role|capitalize }}
-              </span>
-            </td>
-            <td class="text-muted fs-12">{{ user.created_at.strftime('%d %b %Y') }}</td>
-            {% if current_user.role == 'superadmin' %}
-            <td>
-              <div class="d-flex gap-8">
-                <a href="{{ url_for('users.edit', user_id=user.id) }}"
-                   class="btn btn-outline btn-sm btn-icon" title="Edit">
-                  <i class="ri-edit-line"></i>
-                </a>
-                {% if user.id != current_user.id %}
-                <button class="btn btn-danger btn-sm btn-icon" title="Delete"
-                        onclick="openModal('modal-hapus-{{ user.id }}')">
-                  <i class="ri-delete-bin-line"></i>
-                </button>
-                {% endif %}
-              </div>
-
-              <!-- Delete Modal -->
-              <div class="modal-overlay" id="modal-hapus-{{ user.id }}">
-                <div class="modal">
-                  <div class="modal-header">
-                    <h3>⚠️ Konfirmasi Hapus</h3>
+        {% if users.items %}
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">No</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama & Username</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Email</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Role</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Dibuat</th>
+                <th class="text-secondary opacity-7"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users.items %}
+              <tr>
+                <td><p class="text-xs font-weight-bold mb-0 ps-3">{{ loop.index + (users.page-1)*users.per_page }}</p></td>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="d-flex align-items-center justify-content-center me-3 border-radius-lg"
+                         style="width:36px;height:36px;background:linear-gradient(195deg,#42424a,#191919);flex-shrink:0;">
+                      <span class="text-white text-sm font-weight-bold">{{ user.nama[0].upper() }}</span>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm">{{ user.nama }}</h6>
+                      <p class="text-xs text-secondary mb-0"><code>{{ user.username }}</code></p>
+                    </div>
                   </div>
-                  <div class="modal-body">
-                    Apakah Anda yakin ingin menghapus user <strong>{{ user.nama }}</strong>?
-                    Tindakan ini tidak dapat dibatalkan.
-                  </div>
-                  <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeModal('modal-hapus-{{ user.id }}')">
-                      Cancel
+                </td>
+                <td><p class="text-xs font-weight-bold mb-0">{{ user.email }}</p></td>
+                <td class="align-middle text-center text-sm">
+                  <span class="badge badge-sm {% if user.role=='superadmin' %}bg-gradient-warning{% else %}bg-gradient-info{% endif %}">
+                    {{ user.role|capitalize }}
+                  </span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-secondary text-xs">{{ user.created_at.strftime('%d %b %Y') }}</span>
+                </td>
+                <td class="align-middle">
+                  <div class="d-flex justify-content-center gap-2">
+                    {% if current_user.role == 'superadmin' or current_user.id == user.id %}
+                    <a href="{{ url_for('users.edit', user_id=user.id) }}" class="btn btn-sm bg-gradient-info mb-0" title="Edit">
+                      Edit
+                    </a>
+                    {% endif %}
+                    {% if current_user.role == 'superadmin' and user.id != current_user.id %}
+                    <button class="btn btn-sm bg-gradient-danger mb-0" title="Hapus"
+                            onclick="document.getElementById('modal-hapus-{{ user.id }}').classList.add('show')">
+                      Hapus
                     </button>
-                    <form method="POST" action="{{ url_for('users.hapus', user_id=user.id) }}">
-                      <button type="submit" class="btn btn-danger" id="btn-confirm-delete-{{ user.id }}">
-                        <i class="ri-delete-bin-line"></i> Delete
-                      </button>
-                    </form>
+                    {% endif %}
                   </div>
-                </div>
-              </div>
-            </td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+                  {% if current_user.role == 'superadmin' and user.id != current_user.id %}
+                  <div class="modal-backdrop-custom" id="modal-hapus-{{ user.id }}">
+                    <div class="card p-4" style="max-width:380px; width:90%;">
+                      <h6 class="mb-2"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Konfirmasi Hapus</h6>
+                      <p class="text-sm text-secondary mb-4">
+                        Hapus user <strong>{{ user.nama }}</strong>? Tindakan ini tidak dapat dibatalkan.
+                      </p>
+                      <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-outline-secondary mb-0"
+                                onclick="document.getElementById('modal-hapus-{{ user.id }}').classList.remove('show')">Batal</button>
+                        <form method="POST" action="{{ url_for('users.hapus', user_id=user.id) }}" class="d-inline">
+                          <button type="submit" class="btn btn-sm bg-gradient-danger mb-0" id="btn-confirm-delete-{{ user.id }}">Hapus</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-    <!-- Pagination -->
-    {% if users.pages > 1 %}
-    <div class="pagination" style="padding:16px">
-      <a class="page-link {% if not users.has_prev %}disabled{% endif %}"
-         href="{{ url_for('users.index', page=users.prev_num, q=search) }}">
-        <i class="ri-arrow-left-s-line"></i>
-      </a>
-      {% for p in users.iter_pages(left_edge=1,right_edge=1,left_current=1,right_current=1) %}
-        {% if p %}
-          <a class="page-link {% if p==users.page %}active{% endif %}"
-             href="{{ url_for('users.index', page=p, q=search) }}">{{ p }}</a>
-        {% else %}
-          <span class="page-link" style="cursor:default">…</span>
+        {% if users.pages > 1 %}
+        <div class="d-flex justify-content-center mt-3">
+          <nav><ul class="pagination pagination-sm">
+            <li class="page-item {% if not users.has_prev %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('users.index', page=users.prev_num, q=search) }}">&laquo;</a>
+            </li>
+            {% for p in users.iter_pages(left_edge=1,right_edge=1,left_current=1,right_current=1) %}
+              {% if p %}<li class="page-item {% if p==users.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('users.index', page=p, q=search) }}">{{ p }}</a>
+              </li>{% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+            {% endfor %}
+            <li class="page-item {% if not users.has_next %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('users.index', page=users.next_num, q=search) }}">&raquo;</a>
+            </li>
+          </ul></nav>
+        </div>
         {% endif %}
-      {% endfor %}
-      <a class="page-link {% if not users.has_next %}disabled{% endif %}"
-         href="{{ url_for('users.index', page=users.next_num, q=search) }}">
-        <i class="ri-arrow-right-s-line"></i>
-      </a>
-    </div>
-    {% endif %}
 
-    {% else %}
-    <div class="empty-state">
-      <i class="ri-group-line"></i>
-      <p>Tidak ada data user ditemukan.</p>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-users fa-4x text-secondary opacity-3 mb-3 d-block"></i>
+          <p class="text-secondary">Tidak ada data user ditemukan.</p>
+        </div>
+        {% endif %}
+      </div>
     </div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}

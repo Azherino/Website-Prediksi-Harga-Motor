@@ -29,3 +29,6 @@ Thumbs.db
 
 #report
 *.pdf
+
+#markdown 
+*.md

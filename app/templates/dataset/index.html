@@ -1,156 +1,180 @@
 {% extends "base.html" %}
 {% block title %}Import Dataset{% endblock %}
 {% block page_title %}Import Dataset{% endblock %}
-{% block page_subtitle %}Upload dan kelola dataset motor bekas{% endblock %}
 
 {% block content %}
-
-<!-- Upload Card -->
-<div class="card mb-24">
-  <div class="card-header">
-    <h3><i class="ri-upload-cloud-line"></i> Upload Dataset Baru</h3>
-  </div>
-  <div class="card-body">
-
-    <!-- Column guide -->
-    <div class="alert alert-info" style="margin-bottom:20px">
-      <i class="ri-information-line"></i>
-      <div>
-        <strong>Format Kolom yang Dibutuhkan (9 kolom):</strong><br/>
-        <code style="font-size:11px">tahun_produksi, kapasitas_mesin, jarak_tempuh, merek_motor,
-        kondisi_fisik, tipe_motor, kelengkapan_surat, pajak, harga_aktual</code>
-      </div>
-    </div>
-
-    <form method="POST" action="{{ url_for('dataset.import_dataset') }}"
-          enctype="multipart/form-data" id="upload-form">
-
-      <!-- Drop Zone -->
-      <div class="upload-zone" id="upload-zone">
-        <div class="upload-icon"><i class="ri-file-excel-2-line"></i></div>
-        <h4>Drag &amp; Drop file di sini</h4>
-        <p>atau klik untuk memilih file (CSV / Excel)</p>
-        <input type="file" id="file-input" name="file"
-               accept=".csv,.xlsx,.xls" style="display:none" required/>
-      </div>
-
-      <!-- Progress (hidden) -->
-      <div id="upload-progress" style="display:none; margin-top:16px">
-        <div class="d-flex justify-between mb-8">
-          <span class="fs-12 text-muted">Mengupload...</span>
-          <span class="fs-12 text-muted" id="progress-pct">0%</span>
+<div class="row">
+  <!-- Upload Card -->
+  <div class="col-lg-5 col-md-12 mb-4">
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">
+            <i class="fas fa-cloud-upload-alt me-2"></i>Upload Dataset Baru
+          </h6>
         </div>
-        <div class="progress"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
       </div>
+      <div class="card-body">
+        <div class="alert border-radius-lg py-3 mb-3" style="background:#e3f2fd; border-left:4px solid #1976d2;">
+          <div class="d-flex">
+            <i class="fas fa-info-circle text-primary me-2 mt-1"></i>
+            <div>
+              <p class="text-sm font-weight-bold mb-1 text-dark">Format Kolom (9 kolom):</p>
+              <p class="text-xs text-secondary mb-0"><code>tahun_produksi, kapasitas_mesin, jarak_tempuh, merek_motor, kondisi_fisik, tipe_motor, kelengkapan_surat, pajak, harga_aktual</code></p>
+            </div>
+          </div>
+        </div>
 
-      <div style="margin-top:20px; display:flex; gap:10px">
-        <button type="submit" class="btn btn-primary" id="btn-upload">
-          <i class="ri-upload-2-line"></i> Upload &amp; Process
-        </button>
-        <button type="reset" class="btn btn-outline" id="btn-reset-upload">
-          <i class="ri-refresh-line"></i> Reset
-        </button>
+        <form method="POST" action="{{ url_for('dataset.import_dataset') }}" enctype="multipart/form-data" id="upload-form">
+          <div class="upload-zone mb-3" id="upload-zone" onclick="document.getElementById('file-input').click()">
+            <div class="upload-icon"><i class="fas fa-table"></i></div>
+            <h6 class="font-weight-bold text-dark">Drag & Drop file di sini</h6>
+            <p class="text-sm text-secondary mb-0">atau klik untuk memilih file (CSV / Excel)</p>
+            <p class="text-xs text-secondary mt-1" id="file-name-display">Format: .csv, .xlsx, .xls</p>
+            <input type="file" id="file-input" name="file" accept=".csv,.xlsx,.xls" style="display:none" required>
+          </div>
+
+          <div id="upload-progress" style="display:none;" class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-xs text-secondary">Mengupload...</span>
+              <span class="text-xs text-secondary" id="progress-pct">0%</span>
+            </div>
+            <div class="progress">
+              <div class="progress-bar bg-gradient-info" id="progress-bar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn bg-gradient-primary flex-fill" id="btn-upload">
+              <i class="fas fa-upload me-1"></i>Upload & Process
+            </button>
+            <button type="reset" class="btn btn-outline-secondary" id="btn-reset-upload">Reset</button>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
-</div>
-
-<!-- History Table -->
-<div class="card">
-  <div class="card-header">
-    <h3><i class="ri-history-line"></i> Riwayat Import Dataset</h3>
-  </div>
-  <div class="card-body" style="padding:0">
-    {% if datasets %}
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>No</th><th>Nama File</th><th>Jumlah Data</th>
-            <th>Status</th><th>Diupload Oleh</th><th>Tanggal</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ds in datasets %}
-          <tr>
-            <td>{{ loop.index }}</td>
-            <td class="fw-600"><i class="ri-file-excel-2-line" style="color:var(--success)"></i> {{ ds.nama_file }}</td>
-            <td>{{ ds.jumlah_data }} baris</td>
-            <td>
-              <span class="badge {% if ds.status=='valid' %}badge-success{% elif ds.status=='invalid' %}badge-danger{% else %}badge-warning{% endif %}">
-                {% if ds.status=='valid' %}✅ Valid{% elif ds.status=='invalid' %}❌ Invalid{% else %}⏳ Pending{% endif %}
-              </span>
-            </td>
-            <td>{{ ds.uploader.nama if ds.uploader else '-' }}</td>
-            <td class="text-muted fs-12">{{ ds.created_at.strftime('%d %b %Y %H:%M') }}</td>
-            <td>
-              <div class="d-flex gap-8">
-                <a href="{{ url_for('dataset.preview', dataset_id=ds.id) }}"
-                   class="btn btn-outline btn-sm btn-icon" title="Preview">
-                  <i class="ri-eye-line"></i>
-                </a>
-                {% if ds.status == 'valid' %}
-                <a href="{{ url_for('dataset.report', dataset_id=ds.id, fmt='pdf') }}"
-                   class="btn btn-outline btn-sm btn-icon" title="Export PDF">
-                  <i class="ri-file-pdf-line"></i>
-                </a>
-                <a href="{{ url_for('dataset.report', dataset_id=ds.id, fmt='xlsx') }}"
-                   class="btn btn-outline btn-sm btn-icon" title="Export Excel">
-                  <i class="ri-file-excel-2-line"></i>
-                </a>
-                {% endif %}
-                <button class="btn btn-danger btn-sm btn-icon" title="Delete"
-                        onclick="openModal('modal-del-{{ ds.id }}')">
-                  <i class="ri-delete-bin-line"></i>
-                </button>
-              </div>
-
-              <div class="modal-overlay" id="modal-del-{{ ds.id }}">
-                <div class="modal">
-                  <div class="modal-header"><h3>⚠️ Hapus Dataset</h3></div>
-                  <div class="modal-body">
-                    Hapus <strong>{{ ds.nama_file }}</strong>? Semua data motor terkait juga akan dihapus.
-                  </div>
-                  <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeModal('modal-del-{{ ds.id }}')">Cancel</button>
-                    <form method="POST" action="{{ url_for('dataset.hapus', dataset_id=ds.id) }}">
-                      <button type="submit" class="btn btn-danger">
-                        <i class="ri-delete-bin-line"></i> Delete
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
     </div>
-    {% else %}
-    <div class="empty-state">
-      <i class="ri-database-2-line"></i>
-      <p>Belum ada dataset yang diimport.</p>
+  </div>
+
+  <!-- History Table -->
+  <div class="col-lg-7 col-md-12 mb-4">
+    <div class="card">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">
+            <i class="fas fa-history me-2"></i>Riwayat Import Dataset
+          </h6>
+        </div>
+      </div>
+      <div class="card-body px-0 pb-2">
+        {% if datasets %}
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">No</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama File</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Jumlah</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tanggal</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ds in datasets %}
+              <tr>
+                <td><p class="text-xs font-weight-bold mb-0 ps-3">{{ loop.index }}</p></td>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="me-3 d-flex align-items-center">
+                      <i class="fas fa-file-excel text-success fa-lg"></i>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm">{{ ds.nama_file }}</h6>
+                      <p class="text-xs text-secondary mb-0">{{ ds.uploader.nama if ds.uploader else '-' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="align-middle text-center">
+                  <p class="text-xs font-weight-bold mb-0">{{ ds.jumlah_data }} baris</p>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <span class="badge badge-sm {% if ds.status=='valid' %}bg-gradient-success{% elif ds.status=='invalid' %}bg-gradient-danger{% else %}bg-gradient-warning{% endif %}">
+                    {% if ds.status=='valid' %}Valid{% elif ds.status=='invalid' %}Invalid{% else %}Pending{% endif %}
+                  </span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-secondary text-xs">{{ ds.created_at.strftime('%d %b %Y') }}</span>
+                </td>
+                 <td class="align-middle text-center">
+                  <div class="d-flex justify-content-center gap-2">
+                    <a href="{{ url_for('dataset.preview', dataset_id=ds.id) }}"
+                       class="btn btn-sm bg-gradient-info mb-0" title="Cek isi dataset">
+                      <i class="fas fa-eye me-1"></i>Cek
+                    </a>
+                    <button class="btn btn-sm bg-gradient-danger mb-0" title="Hapus Dataset"
+                            onclick="document.getElementById('modal-del-{{ ds.id }}').classList.add('show')">
+                      <i class="fas fa-trash-alt me-1"></i>Hapus
+                    </button>
+                  </div>
+                  <div class="modal-backdrop-custom" id="modal-del-{{ ds.id }}">
+                    <div class="card p-4" style="max-width:400px; width:90%;">
+                      <h6 class="mb-2"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Hapus Dataset</h6>
+                      <p class="text-sm text-secondary mb-4">
+                        Hapus <strong>{{ ds.nama_file }}</strong>? Semua data motor terkait juga akan dihapus.
+                      </p>
+                      <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-outline-secondary mb-0"
+                                onclick="document.getElementById('modal-del-{{ ds.id }}').classList.remove('show')">Batal</button>
+                        <form method="POST" action="{{ url_for('dataset.hapus', dataset_id=ds.id) }}" class="d-inline">
+                          <button type="submit" class="btn btn-sm bg-gradient-danger mb-0">Hapus</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-database fa-4x text-secondary opacity-3 mb-3 d-block"></i>
+          <p class="text-secondary">Belum ada dataset yang diimport.</p>
+        </div>
+        {% endif %}
+      </div>
     </div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  initUploadZone('upload-zone', 'file-input');
-
-  // Fake progress on submit
-  document.getElementById('upload-form').addEventListener('submit', () => {
+var zone = document.getElementById('upload-zone');
+var fileInput = document.getElementById('file-input');
+var fileNameDisplay = document.getElementById('file-name-display');
+if (zone && fileInput) {
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileNameDisplay.textContent = '✓ ' + e.dataTransfer.files[0].name; }
+  });
+  fileInput.addEventListener('change', function() { if (this.files.length) fileNameDisplay.textContent = '✓ ' + this.files[0].name; });
+}
+var uploadForm = document.getElementById('upload-form');
+if (uploadForm) {
+  uploadForm.addEventListener('submit', function() {
     document.getElementById('upload-progress').style.display = 'block';
-    let pct = 0;
-    const interval = setInterval(() => {
+    var pct = 0;
+    var interval = setInterval(function() {
       pct = Math.min(pct + Math.random() * 15, 95);
       document.getElementById('progress-bar').style.width = pct + '%';
       document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
       if (pct >= 95) clearInterval(interval);
     }, 200);
   });
+}
 </script>
 {% endblock %}

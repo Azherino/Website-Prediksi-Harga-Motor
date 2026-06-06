@@ -13,6 +13,8 @@ from reportlab.lib.units import cm
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
                                 Table, TableStyle, HRFlowable)
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.units import inch
+from flask import current_app
 
 # ── Excel ─────────────────────────────────────────────────────────────────────
 from openpyxl import Workbook
@@ -26,12 +28,33 @@ WHITE     = colors.white
 
 # ── Shared Helpers ────────────────────────────────────────────────────────────
 
+def shared_draw_header(canvas, doc):
+    canvas.saveState()
+    logo_path = os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
+    page_w, page_h = doc.pagesize
+    
+    if os.path.exists(logo_path):
+        canvas.drawImage(logo_path, 40, page_h - 60, width=1.8*inch, height=0.6*inch, preserveAspectRatio=True, anchor='nw')
+        
+    canvas.setFont('Helvetica-Bold', 16)
+    canvas.drawString(180, page_h - 35, "PT Putra Hamid")
+    
+    canvas.setFont('Helvetica', 10)
+    canvas.setFillColor(colors.dimgrey)
+    canvas.drawString(180, page_h - 50, "Sistem Prediksi Harga Motor Bekas")
+    
+    canvas.setStrokeColor(colors.grey)
+    canvas.setLineWidth(1)
+    canvas.line(40, page_h - 70, page_w - 40, page_h - 70)
+    
+    canvas.setFont('Helvetica', 9)
+    canvas.setFillColor(colors.grey)
+    canvas.drawRightString(page_w - 40, 20, f"Halaman {doc.page}")
+    
+    canvas.restoreState()
+
+
 def _header(story, styles, title, subtitle=''):
-    story.append(Paragraph('<font color="#1E3A5F"><b>PT PUTRA HAMID</b></font>',
-                            styles['title']))
-    story.append(Paragraph('Sistem Prediksi Harga Motor Bekas', styles['sub']))
-    story.append(HRFlowable(width='100%', thickness=2, color=PRIMARY))
-    story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph(title, styles['h1']))
     if subtitle:
         story.append(Paragraph(subtitle, styles['sub']))
@@ -76,7 +99,7 @@ def _rp(value):
 
 def generate_dataset_pdf(dataset, stats, save_path):
     doc  = SimpleDocTemplate(save_path, pagesize=A4,
-                              topMargin=1.5*cm, bottomMargin=1.5*cm,
+                              topMargin=90, bottomMargin=40,
                               leftMargin=2*cm, rightMargin=2*cm)
     s    = _make_styles()
     story = []
@@ -119,7 +142,7 @@ def generate_dataset_pdf(dataset, stats, save_path):
     story.append(t2)
     story.append(Spacer(1, 0.5*cm))
 
-    doc.build(story)
+    doc.build(story, onFirstPage=shared_draw_header, onLaterPages=shared_draw_header)
     return save_path
 
 
@@ -163,7 +186,7 @@ def generate_dataset_excel(dataset, stats, save_path):
 
 def generate_koefisien_pdf(model_obj, save_path):
     doc   = SimpleDocTemplate(save_path, pagesize=A4,
-                               topMargin=1.5*cm, bottomMargin=1.5*cm,
+                               topMargin=90, bottomMargin=40,
                                leftMargin=2*cm, rightMargin=2*cm)
     s     = _make_styles()
     story = []
@@ -209,7 +232,7 @@ def generate_koefisien_pdf(model_obj, save_path):
     t2.setStyle(_table_style())
     story.append(t2)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=shared_draw_header, onLaterPages=shared_draw_header)
     return save_path
 
 
@@ -217,7 +240,7 @@ def generate_koefisien_pdf(model_obj, save_path):
 
 def generate_prediksi_pdf(prediksi_obj, admin_name, save_path):
     doc   = SimpleDocTemplate(save_path, pagesize=A4,
-                               topMargin=1.5*cm, bottomMargin=1.5*cm,
+                               topMargin=90, bottomMargin=40,
                                leftMargin=2*cm, rightMargin=2*cm)
     s     = _make_styles()
     story = []
@@ -252,7 +275,7 @@ def generate_prediksi_pdf(prediksi_obj, admin_name, save_path):
     t.setStyle(style)
     story.append(t)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=shared_draw_header, onLaterPages=shared_draw_header)
     return save_path
 
 
@@ -260,7 +283,7 @@ def generate_prediksi_pdf(prediksi_obj, admin_name, save_path):
 
 def generate_evaluasi_pdf(model_obj, save_path):
     doc   = SimpleDocTemplate(save_path, pagesize=A4,
-                               topMargin=1.5*cm, bottomMargin=1.5*cm,
+                               topMargin=90, bottomMargin=40,
                                leftMargin=2*cm, rightMargin=2*cm)
     s     = _make_styles()
     story = []
@@ -299,7 +322,7 @@ def generate_evaluasi_pdf(model_obj, save_path):
     t2.setStyle(_table_style())
     story.append(t2)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=shared_draw_header, onLaterPages=shared_draw_header)
     return save_path
 
 
@@ -353,7 +376,7 @@ def generate_semua_prediksi_pdf(results, admin_name, save_path, merek_f='', tipe
     Generate landscape A4 PDF report of all prediction records, optionally filtered.
     """
     doc   = SimpleDocTemplate(save_path, pagesize=landscape(A4),
-                               topMargin=1.5*cm, bottomMargin=1.5*cm,
+                               topMargin=90, bottomMargin=40,
                                leftMargin=1.5*cm, rightMargin=1.5*cm)
     s     = _make_styles()
     story = []
@@ -422,6 +445,6 @@ def generate_semua_prediksi_pdf(results, admin_name, save_path, merek_f='', tipe
     t.setStyle(_table_style())
     story.append(t)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=shared_draw_header, onLaterPages=shared_draw_header)
     return save_path
 

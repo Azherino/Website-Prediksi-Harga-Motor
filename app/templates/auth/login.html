@@ -1,62 +1,77 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Login — Sistem Prediksi Harga Motor PT Putra Hamid</title>
-  <meta name="description" content="Login admin sistem prediksi harga motor bekas PT Putra Hamid." />
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  
+  <!-- Fonts and icons -->
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
+  <!-- Font Awesome Icons -->
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <style>
+    .form-control::placeholder { color: #aaa; }
+    .input-login { border: 1px solid #d2d6da; border-radius: 8px; padding: 12px 16px; font-size: 14px; width: 100%; outline: none; transition: border-color 0.2s; }
+    .input-login:focus { border-color: #e91e63; box-shadow: 0 0 0 2px rgba(233,30,99,.15); }
+    .input-label { display: block; font-size: 12px; font-weight: 600; color: #7b809a; margin-bottom: 4px; }
+  </style>
+  
+  <!-- Material Dashboard CSS -->
+  <link id="pagestyle" href="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/css/material-dashboard.css" rel="stylesheet" />
 </head>
-
-<body>
-  <div class="login-page">
-    <div class="login-card">
-
-      <!-- Brand -->
-      <div class="login-brand">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PT Putra Hamid Logo" class="logo-img">
-        <p>Sistem Prediksi Harga Motor Bekas</p>
-      </div>
-
-      <!-- Flash -->
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">
-        <i class="ri-information-line"></i> {{ message }}
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
-
-      <!-- Form -->
-      <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
-        <div class="form-group">
-          <label class="form-label" for="username">Username</label>
-          <input id="username" name="username" type="text" class="form-control" placeholder="Masukkan username"
-            autocomplete="username" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <div class="input-group">
-            <input id="password" name="password" type="password" class="form-control" placeholder="Masukkan password"
-              autocomplete="current-password" required />
-            <i class="ri-eye-line input-group-icon" id="toggle-icon" onclick="togglePassword('password','toggle-icon')"
-              title="Show/Hide Password"></i>
+<body class="bg-gray-200">
+  <main class="main-content  mt-0">
+    <div class="page-header align-items-start min-vh-100">
+      <div class="container my-auto">
+        <div class="row">
+          <div class="col-lg-4 col-md-8 col-12 mx-auto">
+            <div class="card z-index-0 fadeIn3 fadeInBottom">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+                  <h4 class="text-white font-weight-bolder text-center mt-2 mb-0">Sign in</h4>
+                  <div class="row mt-3">
+                    <div class="col-2 text-center ms-auto"></div>
+                    <div class="col-8 text-center px-1">
+                      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="max-height: 50px;" class="mb-2">
+                      <p class="text-white text-sm mb-0">PT Putra Hamid</p>
+                    </div>
+                    <div class="col-2 text-center me-auto"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} text-white text-sm py-2" role="alert">
+                        {{ message }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+                <form role="form" class="text-start" method="POST" action="{{ url_for('auth.login') }}">
+                  <div class="mb-3 mt-3">
+                    <label class="input-label" for="username">USERNAME</label>
+                    <input id="username" name="username" type="text" class="input-login" placeholder="Masukkan username..." autocomplete="username" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="input-label" for="password">PASSWORD</label>
+                    <input id="password" name="password" type="password" class="input-login" placeholder="Masukkan password..." autocomplete="current-password" required>
+                  </div>
+                  <div class="text-center">
+                    <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">Sign in</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
-
-        <button type="submit" class="btn btn-primary btn-lg" id="btn-login"
-          style="width:100%; margin-top:8px; justify-content:center;">
-          <i class="ri-login-box-line"></i> Login
-        </button>
-      </form>
+      </div>
     </div>
-  </div>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </main>
+  
+  <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/js/core/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/js/core/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/creativetimofficial/material-dashboard@master/assets/js/material-dashboard.min.js"></script>
 </body>
-
 </html>
